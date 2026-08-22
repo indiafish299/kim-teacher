@@ -1,11 +1,20 @@
 /** Thin Upstash Redis REST client — no SDK, just fetch. */
 
+/** Vercel's Upstash integration injects KV_REST_API_*; a manual setup usually uses UPSTASH_*. */
+export function kvUrl() {
+  return (process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL ?? "").replace(/\/+$/, "");
+}
+
+export function kvToken() {
+  return process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN ?? "";
+}
+
 function base() {
-  return (process.env.UPSTASH_REDIS_REST_URL ?? "").replace(/\/+$/, "");
+  return kvUrl();
 }
 
 function auth() {
-  return { authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN ?? ""}` };
+  return { authorization: `Bearer ${kvToken()}` };
 }
 
 export async function kvGet(key: string): Promise<string | null> {

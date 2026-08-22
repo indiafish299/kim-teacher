@@ -48,7 +48,7 @@ http://localhost:3000 접속 후 설정에서 Anthropic API 키를 입력하면 
 | --- | --- |
 | `AUTH_SECRET` | 세션 쿠키 서명용 임의 문자열 (32자 이상) |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google OAuth 클라이언트 |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | 계정별 동기화 저장소 |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | 계정별 동기화 저장소. Vercel의 Upstash 연동을 쓰면 `KV_REST_API_URL` / `KV_REST_API_TOKEN` 이름으로 들어오는데, 둘 다 인식합니다 |
 
 구글 OAuth 리디렉션 URI: `https://<도메인>/api/auth/callback/google`
 
