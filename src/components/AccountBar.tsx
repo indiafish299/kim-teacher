@@ -26,6 +26,21 @@ function GoogleMark() {
   );
 }
 
+
+function LegalLinks() {
+  return (
+    <p className="px-3 pt-0.5 pb-1 text-[10px] text-muted">
+      <a href="/privacy" className="underline underline-offset-2 hover:text-ink2">
+        개인정보처리방침
+      </a>
+      <span className="mx-1.5">·</span>
+      <a href="/terms" className="underline underline-offset-2 hover:text-ink2">
+        이용약관
+      </a>
+    </p>
+  );
+}
+
 export default function AccountBar({
   session,
   syncing,
@@ -49,6 +64,7 @@ export default function AccountBar({
           <IconSettings className="text-muted" />
           <span className="flex-1 text-left">설정</span>
         </button>
+        <LegalLinks />
       </div>
     );
   }
@@ -71,6 +87,7 @@ export default function AccountBar({
           <IconSettings className="text-muted" />
           <span className="flex-1 text-left">설정</span>
         </button>
+        <LegalLinks />
       </div>
     );
   }
@@ -114,6 +131,7 @@ export default function AccountBar({
         <IconSettings className="text-muted" />
         <span className="flex-1 text-left">설정</span>
       </button>
+      <LegalLinks />
     </div>
   );
 }
