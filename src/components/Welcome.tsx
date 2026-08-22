@@ -1,8 +1,16 @@
 "use client";
 
-import { MODES, getMode, type Intimacy, type ModeId } from "@/lib/agent";
+import type { Intimacy } from "@/lib/agent";
 import Avatar from "./Avatar";
-import { MODE_ICONS, IconKey } from "./Icons";
+import { IconKey } from "./Icons";
+
+const STARTERS = [
+  "체험학습 가정통신문 초안 좀 부탁해요",
+  "학부모가 퇴근 후에도 계속 연락하시는데 어떡하죠?",
+  "4학년 과학 '물의 상태 변화' 40분 지도안 필요해요",
+  "행동특성 500자요. 조용한데 맡은 일은 끝까지 하는 학생",
+  "학기말 업무가 몰렸는데 우선순위 좀 잡아주세요",
+];
 
 function address(userName: string, intimacy: Intimacy) {
   const name = userName.trim();
@@ -25,26 +33,21 @@ function greeting(who: string, intimacy: Intimacy) {
 }
 
 export default function Welcome({
-  mode,
   hasKey,
   userName,
   intimacy,
   onPick,
-  onModeChange,
   onOpenSettings,
 }: {
-  mode: ModeId;
   hasKey: boolean;
   userName: string;
   intimacy: Intimacy;
   onPick: (text: string) => void;
-  onModeChange: (m: ModeId) => void;
   onOpenSettings: () => void;
 }) {
-  const current = getMode(mode);
   const who = address(userName, intimacy);
   const hello = greeting(who, intimacy);
-  const helloLine = `${hello}${/[?!]$/.test(hello) ? " " : ". "}오늘은 뭐부터 할까요?`;
+  const helloLine = `${hello}${/[?!]$/.test(hello) ? " " : ". "}뭐부터 도와드릴까요?`;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
@@ -53,8 +56,8 @@ export default function Welcome({
         <h1 className="mt-3 text-lg font-bold text-ink">김선생</h1>
         <p className="mt-0.5 text-xs text-muted">교직 8년차 · 옆자리 선배</p>
         <p className="mt-3 max-w-sm text-[0.8125rem] leading-relaxed text-ink2">
-          가정통신문과 기안·품의, 수업 자료, 생기부 문구, 그리고 혼자 결정하기 어려운 일까지 같이 봅니다.
-          편하게 말 걸어 주세요.
+          가정통신문이든 기안이든, 학생 문제든 생기부 문구든 그냥 말씀만 하세요.
+          무슨 일인지는 제가 알아서 판단합니다.
         </p>
       </div>
 
@@ -81,37 +84,10 @@ export default function Welcome({
         </div>
       )}
 
-      <div className="fadeup mt-7">
-        <p className="mb-2 px-0.5 text-[11px] font-semibold text-muted">무엇을 도와드릴까요</p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {MODES.filter((m) => m.id !== "assist").map((m) => {
-            const Icon = MODE_ICONS[m.icon];
-            const active = m.id === mode;
-            return (
-              <button
-                key={m.id}
-                onClick={() => onModeChange(m.id)}
-                className={`rounded-2xl border p-3.5 text-left transition-colors ${
-                  active ? "border-accent bg-accentsoft" : "border-line bg-surface hover:border-accent/50"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Icon className={active ? "text-accent" : "text-ink2"} />
-                  <span className="text-[0.8125rem] font-semibold text-ink">{m.label}</span>
-                </div>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-muted">{m.description}</p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       <div className="fadeup mt-6">
-        <p className="mb-2 px-0.5 text-[11px] font-semibold text-muted">
-          {current.label} — 눌러서 바로 물어보기
-        </p>
+        <p className="mb-2 px-0.5 text-right text-[11px] text-muted">눌러서 바로 보내기</p>
         <div className="flex flex-col items-end gap-1.5">
-          {current.starters.map((s) => (
+          {STARTERS.map((s) => (
             <button
               key={s}
               onClick={() => onPick(s)}

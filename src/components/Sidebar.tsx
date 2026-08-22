@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import type { Conversation, TaskItem } from "@/lib/types";
 import { ddayLabel, daysUntil, formatDay } from "@/lib/storage";
-import { getMode } from "@/lib/agent";
 import { FORM_PRESETS, type FormPreset } from "@/lib/forms";
 import {
   IconBookmark,
@@ -62,6 +61,7 @@ export default function Sidebar({
   onClearDone,
   onPickForm,
   onClose,
+  footer,
 }: {
   open: boolean;
   tasks: TaskItem[];
@@ -76,6 +76,7 @@ export default function Sidebar({
   onClearDone: () => void;
   onPickForm: (preset: FormPreset) => void;
   onClose: () => void;
+  footer?: React.ReactNode;
 }) {
   const [openTasks, setOpenTasks] = useState(true);
   const [openForms, setOpenForms] = useState(true);
@@ -279,7 +280,7 @@ export default function Sidebar({
                           {c.title}
                         </div>
                         <div className="mt-0.5 truncate text-[10.5px] text-muted">
-                          {getMode(c.mode).label} · {formatDay(c.updatedAt)}
+                          {c.messages.length}개 메시지 · {formatDay(c.updatedAt)}
                         </div>
                       </button>
                       <button
@@ -299,6 +300,8 @@ export default function Sidebar({
             )}
           </Section>
         </div>
+
+        {footer}
       </aside>
     </>
   );

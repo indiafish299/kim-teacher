@@ -2,17 +2,30 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar";
+import AccountBar from "@/components/AccountBar";
 import ChatHeader from "@/components/ChatHeader";
 import Composer from "@/components/Composer";
 import Welcome from "@/components/Welcome";
 import SettingsModal from "@/components/SettingsModal";
 import { AssistantBubble, DateChip, UserBubble } from "@/components/MessageBubble";
-import { DEFAULT_MODE, type ModeId } from "@/lib/agent";
 import { streamChat } from "@/lib/stream";
 import { downloadIcs } from "@/lib/ics";
 import { DEFAULT_MOOD, guessMood, parseMood, type MoodId } from "@/lib/mood";
 import type { ParsedTask } from "@/lib/blocks";
 import type { FormPreset } from "@/lib/forms";
+import {
+  fetchSession,
+  lastRev,
+  markRev,
+  mergeConversations,
+  mergeSettings,
+  mergeTasks,
+  pullRemote,
+  pushRemote,
+  signOut,
+  stripSecrets,
+  type SessionInfo,
+} from "@/lib/account";
 import {
   DEFAULT_SETTINGS,
   activeKey,
@@ -36,13 +49,16 @@ export default function Page() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [mode, setMode] = useState<ModeId>(DEFAULT_MODE);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [session, setSession] = useState<SessionInfo | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncedAt, setSyncedAt] = useState<number | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+  const syncReady = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Hydrate from localStorage after mount. The server renders the empty state, so
@@ -55,6 +71,54 @@ export default function Page() {
     setReady(true);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
+
+  useEffect(() => {
+    void fetchSession().then(setSession);
+  }, []);
+
+  /* Pull once after login, merge into whatever is already on this device, then push back. */
+  useEffect(() => {
+    if (!ready || !session?.user || !session.syncConfigured) return;
+    let cancelled = false;
+    void (async () => {
+      setSyncing(true);
+      const remote = await pullRemote();
+      if (!cancelled && remote?.data) {
+        const data = remote.data;
+        setConversations((prev) => mergeConversations(prev, data.conversations ?? []));
+        setTasks((prev) => mergeTasks(prev, data.tasks ?? []));
+        if (lastRev() === 0 && data.settings) {
+          setSettings((prev) => {
+            const merged = mergeSettings(prev, data.settings);
+            saveSettings(merged);
+            return merged;
+          });
+        }
+        markRev(remote.rev);
+      }
+      if (!cancelled) {
+        setSyncing(false);
+        setSyncedAt(Date.now());
+        syncReady.current = true;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, session]);
+
+  /* Debounced push of anything that changed locally. */
+  useEffect(() => {
+    if (!syncReady.current || !session?.user || !session.syncConfigured) return;
+    const timer = setTimeout(() => {
+      setSyncing(true);
+      void pushRemote({ conversations, tasks, settings: stripSecrets(settings) }).then((ok) => {
+        setSyncing(false);
+        if (ok) setSyncedAt(Date.now());
+      });
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [conversations, tasks, settings, session]);
 
   useEffect(() => {
     if (ready) saveConversations(conversations);
@@ -148,7 +212,7 @@ export default function Page() {
   /* ---------------- chat ---------------- */
 
   const run = useCallback(
-    async (convId: string, history: ChatMessage[], targetMode: ModeId) => {
+    async (convId: string, history: ChatMessage[]) => {
       const assistantId = uid();
       patchConversation(convId, (c) => ({
         ...c,
@@ -178,7 +242,7 @@ export default function Page() {
           apiKey: activeKey(settings),
           provider: settings.provider,
           model: activeModel(settings),
-          mode: targetMode,
+          mode: "assist",
           profile,
           userName: settings.userName,
           intimacy: settings.intimacy,
@@ -243,7 +307,7 @@ export default function Page() {
         const conv: Conversation = {
           id: convId,
           title: makeTitle(text),
-          mode,
+          mode: "assist",
           messages: [userMsg],
           createdAt: Date.now(),
           updatedAt: Date.now(),
@@ -256,7 +320,6 @@ export default function Page() {
         history = [...existing.messages.filter((m) => !m.error), userMsg];
         patchConversation(convId, (c) => ({
           ...c,
-          mode,
           messages: [...c.messages, userMsg],
           updatedAt: Date.now(),
         }));
@@ -264,9 +327,9 @@ export default function Page() {
 
       setInput("");
       setTimeout(() => scrollToBottom(), 40);
-      void run(convId, history, mode);
+      void run(convId, history);
     },
-    [activeId, busy, conversations, input, mode, patchConversation, run, scrollToBottom, settings],
+    [activeId, busy, conversations, input, patchConversation, run, scrollToBottom, settings],
   );
 
   const retry = useCallback(() => {
@@ -274,11 +337,10 @@ export default function Page() {
     const kept = active.messages.filter((m) => !m.error);
     if (!kept.some((m) => m.role === "user")) return;
     patchConversation(active.id, (c) => ({ ...c, messages: kept }));
-    void run(active.id, kept, active.mode);
+    void run(active.id, kept);
   }, [active, patchConversation, run]);
 
   const pickForm = useCallback((preset: FormPreset) => {
-    setMode(preset.mode);
     setInput(preset.prompt);
     setSidebarOpen(false);
     setTimeout(() => scrollToBottom(), 40);
@@ -301,8 +363,6 @@ export default function Page() {
         onSelect={(id) => {
           abortRef.current?.abort();
           setActiveId(id);
-          const c = conversations.find((x) => x.id === id);
-          if (c) setMode(c.mode);
           setSidebarOpen(false);
         }}
         onDelete={(id) => {
@@ -322,6 +382,23 @@ export default function Page() {
         onClearDone={() => setTasks((prev) => prev.filter((t) => !t.done))}
         onPickForm={pickForm}
         onClose={() => setSidebarOpen(false)}
+        footer={
+          <AccountBar
+            session={session}
+            syncing={syncing}
+            syncedAt={syncedAt}
+            onSignOut={async () => {
+              await signOut();
+              markRev(0);
+              setSession((s) => (s ? { ...s, user: null } : s));
+              syncReady.current = false;
+            }}
+            onOpenSettings={() => {
+              setSettingsOpen(true);
+              setSidebarOpen(false);
+            }}
+          />
+        }
       />
 
       <main className="flex min-w-0 flex-1 flex-col">
@@ -338,12 +415,10 @@ export default function Page() {
         <div className="scroll-thin flex-1 overflow-y-auto">
           {!ready ? null : messages.length === 0 ? (
             <Welcome
-              mode={mode}
               hasKey={hasKey}
               userName={settings.userName}
               intimacy={settings.intimacy}
               onPick={(t) => send(t)}
-              onModeChange={setMode}
               onOpenSettings={() => setSettingsOpen(true)}
             />
           ) : (
@@ -375,11 +450,9 @@ export default function Page() {
 
         <Composer
           value={input}
-          mode={mode}
           busy={busy}
           disabled={false}
           onChange={setInput}
-          onModeChange={setMode}
           onSend={() => send()}
           onStop={() => abortRef.current?.abort()}
         />

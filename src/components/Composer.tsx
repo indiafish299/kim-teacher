@@ -1,25 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MODES, getMode, type ModeId } from "@/lib/agent";
-import { MODE_ICONS, IconSend, IconStop } from "./Icons";
+import { IconSend, IconStop } from "./Icons";
 
 export default function Composer({
   value,
-  mode,
   busy,
   disabled,
   onChange,
-  onModeChange,
   onSend,
   onStop,
 }: {
   value: string;
-  mode: ModeId;
   busy: boolean;
   disabled: boolean;
   onChange: (v: string) => void;
-  onModeChange: (m: ModeId) => void;
   onSend: () => void;
   onStop: () => void;
 }) {
@@ -32,33 +27,9 @@ export default function Composer({
     el.style.height = Math.min(el.scrollHeight, 190) + "px";
   }, [value]);
 
-  const current = getMode(mode);
-
   return (
     <div className="border-t border-line bg-surface px-2 pt-2 pb-2.5 sm:px-4 sm:pb-3">
       <div className="mx-auto w-full max-w-3xl">
-        <div className="scroll-thin mb-2 flex gap-1.5 overflow-x-auto pb-0.5">
-          {MODES.map((m) => {
-            const Icon = MODE_ICONS[m.icon];
-            const active = m.id === mode;
-            return (
-              <button
-                key={m.id}
-                onClick={() => onModeChange(m.id)}
-                title={m.description}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
-                  active
-                    ? "bg-accent text-onaccent"
-                    : "bg-surface2 text-ink2 hover:text-ink"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {m.label}
-              </button>
-            );
-          })}
-        </div>
-
         <div className="flex items-end gap-2">
           <div className="flex min-w-0 flex-1 items-end rounded-[22px] border border-line bg-paper py-1 pr-1 pl-3.5 focus-within:border-accent">
             <textarea
@@ -72,7 +43,7 @@ export default function Composer({
                   if (!busy && value.trim()) onSend();
                 }
               }}
-              placeholder={current.placeholder}
+              placeholder="김선생에게 메시지 보내기"
               disabled={disabled}
               className="scroll-thin max-h-[190px] flex-1 resize-none bg-transparent py-2 text-[0.9375rem] leading-relaxed text-ink outline-none placeholder:text-muted disabled:cursor-not-allowed"
             />
