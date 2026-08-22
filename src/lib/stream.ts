@@ -1,5 +1,7 @@
 import type { ModeId } from "./agent";
 import type { ProviderId } from "./providers";
+import type { McpServer, ToolFlags } from "./tools";
+import type { Attachment, GeneratedFile } from "./types";
 
 export type StreamArgs = {
   apiKey: string;
@@ -9,11 +11,23 @@ export type StreamArgs = {
   profile: string;
   userName: string;
   intimacy: number;
-  mcpUrl?: string;
-  mcpToken?: string;
-  messages: { role: "user" | "assistant"; content: string }[];
+  tools: ToolFlags;
+  mcpServers: McpServer[];
+  containerId?: string;
+  messages: { role: "user" | "assistant"; content: string; attachments?: Attachment[] }[];
   signal: AbortSignal;
   onDelta: (text: string) => void;
+  onTool?: (e: { id: string; name?: string; phase: "start" | "end"; ok?: boolean }) => void;
+  onFile?: (f: GeneratedFile) => void;
+  onContainer?: (id: string) => void;
+};
+
+type Event = {
+  text?: string;
+  error?: string;
+  tool?: { id: string; name?: string; phase: "start" | "end"; ok?: boolean };
+  file?: GeneratedFile;
+  container?: string;
 };
 
 export async function streamChat({
@@ -24,11 +38,15 @@ export async function streamChat({
   profile,
   userName,
   intimacy,
-  mcpUrl,
-  mcpToken,
+  tools,
+  mcpServers,
+  containerId,
   messages,
   signal,
   onDelta,
+  onTool,
+  onFile,
+  onContainer,
 }: StreamArgs): Promise<void> {
   const res = await fetch("/api/chat", {
     method: "POST",
@@ -36,7 +54,18 @@ export async function streamChat({
       "content-type": "application/json",
       "x-user-api-key": apiKey,
     },
-    body: JSON.stringify({ messages, mode, provider, model, profile, userName, intimacy, mcpUrl, mcpToken }),
+    body: JSON.stringify({
+      messages,
+      mode,
+      provider,
+      model,
+      profile,
+      userName,
+      intimacy,
+      tools,
+      mcpServers,
+      containerId,
+    }),
     signal,
   });
 
@@ -70,14 +99,18 @@ export async function streamChat({
         const payload = line.slice(5).trim();
         if (!payload) continue;
         if (payload === "[DONE]") return;
+
+        let event: Event;
         try {
-          const event = JSON.parse(payload) as { text?: string; error?: string };
-          if (event.error) throw new Error(event.error);
-          if (event.text) onDelta(event.text);
-        } catch (e) {
-          if (e instanceof SyntaxError) continue;
-          throw e;
+          event = JSON.parse(payload) as Event;
+        } catch {
+          continue;
         }
+        if (event.error) throw new Error(event.error);
+        if (event.text) onDelta(event.text);
+        if (event.tool) onTool?.(event.tool);
+        if (event.file) onFile?.(event.file);
+        if (event.container) onContainer?.(event.container);
       }
     }
   }

@@ -1,3 +1,5 @@
+import type { Attachment } from "./types";
+
 export type ProviderId = "anthropic" | "openai" | "google" | "xai";
 
 export type ModelOption = {
@@ -16,7 +18,9 @@ export type Provider = {
   consoleLabel: string;
   models: ModelOption[];
   defaultModel: string;
+  /** MCP 서버 연결, 서버 도구, 파일 첨부는 지금은 Claude에서만 됩니다. */
   supportsMcp: boolean;
+  supportsTools: boolean;
 };
 
 export const PROVIDERS: Provider[] = [
@@ -35,6 +39,7 @@ export const PROVIDERS: Provider[] = [
     ],
     defaultModel: "claude-sonnet-5",
     supportsMcp: true,
+    supportsTools: true,
   },
   {
     id: "openai",
@@ -51,6 +56,7 @@ export const PROVIDERS: Provider[] = [
     ],
     defaultModel: "gpt-5.6-terra",
     supportsMcp: false,
+    supportsTools: false,
   },
   {
     id: "google",
@@ -67,6 +73,7 @@ export const PROVIDERS: Provider[] = [
     ],
     defaultModel: "gemini-3.7-flash",
     supportsMcp: false,
+    supportsTools: false,
   },
   {
     id: "xai",
@@ -83,6 +90,7 @@ export const PROVIDERS: Provider[] = [
     ],
     defaultModel: "grok-4.6",
     supportsMcp: false,
+    supportsTools: false,
   },
 ];
 
@@ -100,7 +108,11 @@ export function isValidModel(providerId: string, model: string) {
 /* Upstream request building                                           */
 /* ------------------------------------------------------------------ */
 
-export type ChatTurn = { role: "user" | "assistant"; content: string };
+export type ChatTurn = {
+  role: "user" | "assistant";
+  content: string;
+  attachments?: Attachment[];
+};
 
 export type UpstreamRequest = {
   url: string;
@@ -108,16 +120,48 @@ export type UpstreamRequest = {
   body: string;
 };
 
-export type McpConfig = { url: string; token: string } | null;
+export type BuildArgs = {
+  providerId: ProviderId;
+  apiKey: string;
+  model: string;
+  system: string;
+  messages: ChatTurn[];
+  /** Anthropic 서버 도구 정의 */
+  tools?: Record<string, unknown>[];
+  mcpServers?: Record<string, unknown>[];
+  betas?: string[];
+  /** 코드 실행 컨테이너 재사용 */
+  containerId?: string;
+  /** pause_turn 으로 끊긴 턴을 이어받을 때 붙이는 원본 블록들 */
+  carry?: unknown[];
+};
 
-export function buildUpstreamRequest(
-  providerId: ProviderId,
-  apiKey: string,
-  model: string,
-  system: string,
-  messages: ChatTurn[],
-  mcp: McpConfig,
-): UpstreamRequest {
+/** 한 턴의 사용자 메시지를 Anthropic 콘텐츠 블록 배열로. */
+function anthropicContent(turn: ChatTurn): unknown {
+  const files = turn.attachments ?? [];
+  if (files.length === 0) return turn.content;
+
+  const blocks: unknown[] = [];
+  for (const f of files) {
+    if (f.kind === "image") {
+      blocks.push({ type: "image", source: { type: "file", file_id: f.id } });
+    } else if (f.kind === "document") {
+      blocks.push({
+        type: "document",
+        source: { type: "file", file_id: f.id },
+        title: f.name.slice(0, 100),
+      });
+    } else {
+      blocks.push({ type: "container_upload", file_id: f.id });
+    }
+  }
+  blocks.push({ type: "text", text: turn.content || "이 파일을 봐 주세요." });
+  return blocks;
+}
+
+export function buildUpstreamRequest(args: BuildArgs): UpstreamRequest {
+  const { providerId, apiKey, model, system, messages } = args;
+
   switch (providerId) {
     case "anthropic": {
       const headers: Record<string, string> = {
@@ -125,25 +169,25 @@ export function buildUpstreamRequest(
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       };
+      if (args.betas?.length) headers["anthropic-beta"] = args.betas.join(",");
+
+      const built: unknown[] = messages.map((m) => ({
+        role: m.role,
+        content: m.role === "user" ? anthropicContent(m) : m.content,
+      }));
+      if (args.carry?.length) built.push({ role: "assistant", content: args.carry });
+
       const body: Record<string, unknown> = {
         model,
         max_tokens: 8000,
         stream: true,
         system,
-        messages,
+        messages: built,
       };
-      if (mcp) {
-        headers["anthropic-beta"] = "mcp-client-2025-11-20";
-        body.mcp_servers = [
-          {
-            type: "url",
-            url: mcp.url,
-            name: "kt-mcp",
-            ...(mcp.token ? { authorization_token: mcp.token } : {}),
-          },
-        ];
-        body.tools = [{ type: "mcp_toolset", mcp_server_name: "kt-mcp" }];
-      }
+      if (args.tools?.length) body.tools = args.tools;
+      if (args.mcpServers?.length) body.mcp_servers = args.mcpServers;
+      if (args.containerId) body.container = args.containerId;
+
       return { url: "https://api.anthropic.com/v1/messages", headers, body: JSON.stringify(body) };
     }
 
@@ -162,7 +206,10 @@ export function buildUpstreamRequest(
         body: JSON.stringify({
           model,
           stream: true,
-          messages: [{ role: "system", content: system }, ...messages],
+          messages: [
+            { role: "system", content: system },
+            ...messages.map((m) => ({ role: m.role, content: m.content })),
+          ],
         }),
       };
     }

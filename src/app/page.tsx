@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import AccountBar from "@/components/AccountBar";
+import FolderBar from "@/components/FolderBar";
+import FolderPicker from "@/components/FolderPicker";
 import ChatHeader from "@/components/ChatHeader";
 import Composer from "@/components/Composer";
 import Welcome from "@/components/Welcome";
@@ -11,6 +13,18 @@ import { AssistantBubble, DateChip, UserBubble } from "@/components/MessageBubbl
 import { streamChat } from "@/lib/stream";
 import { downloadIcs } from "@/lib/ics";
 import { DEFAULT_MOOD, guessMood, parseMood, type MoodId } from "@/lib/mood";
+import { downloadGenerated, fetchGeneratedBlob, uploadFile } from "@/lib/files";
+import {
+  folderSupported,
+  forgetFolder,
+  listFiles,
+  loadFolder,
+  pickFolder,
+  readFile,
+  saveToFolder,
+  type FolderEntry,
+} from "@/lib/folder";
+import { getProvider } from "@/lib/providers";
 import type { ParsedTask } from "@/lib/blocks";
 import type { FormPreset } from "@/lib/forms";
 import {
@@ -41,7 +55,14 @@ import {
   saveTasks,
   uid,
 } from "@/lib/storage";
-import type { ChatMessage, Conversation, Settings, TaskItem } from "@/lib/types";
+import type {
+  Attachment,
+  ChatMessage,
+  Conversation,
+  GeneratedFile,
+  Settings,
+  TaskItem,
+} from "@/lib/types";
 
 export default function Page() {
   const [ready, setReady] = useState(false);
@@ -56,6 +77,17 @@ export default function Page() {
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncedAt, setSyncedAt] = useState<number | null>(null);
+
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [uploading, setUploading] = useState<string[]>([]);
+  const [notice, setNotice] = useState("");
+
+  const [folder, setFolder] = useState<FileSystemDirectoryHandle | null>(null);
+  /** 서버 렌더에서는 알 수 없으므로 마운트 후에 확인합니다. */
+  const [fsSupported, setFsSupported] = useState(false);
+  const [folderOpen, setFolderOpen] = useState(false);
+  const [folderEntries, setFolderEntries] = useState<FolderEntry[]>([]);
+  const [folderLoading, setFolderLoading] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const syncReady = useRef(false);
@@ -74,6 +106,12 @@ export default function Page() {
 
   useEffect(() => {
     void fetchSession().then(setSession);
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFsSupported(folderSupported());
+    void loadFolder().then(setFolder);
   }, []);
 
   /* Pull once after login, merge into whatever is already on this device, then push back. */
@@ -128,12 +166,19 @@ export default function Page() {
     if (ready) saveTasks(tasks);
   }, [tasks, ready]);
 
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(""), 6000);
+    return () => clearTimeout(t);
+  }, [notice]);
+
   const active = useMemo(
     () => conversations.find((c) => c.id === activeId) ?? null,
     [conversations, activeId],
   );
   const messages = useMemo(() => active?.messages ?? [], [active]);
   const hasKey = Boolean(activeKey(settings));
+  const canAttach = getProvider(settings.provider).supportsTools;
 
   const scrollToBottom = useCallback((smooth = true) => {
     bottomRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "end" });
@@ -156,6 +201,87 @@ export default function Page() {
   const patchConversation = useCallback((id: string, fn: (c: Conversation) => Conversation) => {
     setConversations((prev) => prev.map((c) => (c.id === id ? fn(c) : c)));
   }, []);
+
+  /* ---------------- 파일 ---------------- */
+
+  const addFiles = useCallback(
+    async (files: File[]) => {
+      const key = activeKey(settings);
+      if (!key) {
+        setSettingsOpen(true);
+        return;
+      }
+      if (!canAttach) {
+        setNotice("파일 첨부는 Claude를 쓸 때만 됩니다. 설정에서 Claude로 바꿔 주세요.");
+        return;
+      }
+      for (const file of files.slice(0, 5)) {
+        setUploading((u) => [...u, file.name]);
+        try {
+          const att = await uploadFile(file, key);
+          setAttachments((prev) => (prev.some((a) => a.id === att.id) ? prev : [...prev, att]));
+        } catch (e) {
+          setNotice(e instanceof Error ? e.message : `${file.name}을(를) 올리지 못했습니다.`);
+        } finally {
+          setUploading((u) => u.filter((n) => n !== file.name));
+        }
+      }
+    },
+    [canAttach, settings],
+  );
+
+  const downloadFile = useCallback(
+    async (f: GeneratedFile) => {
+      const key = activeKey(settings);
+      if (!key) throw new Error("API 키가 없습니다.");
+      await downloadGenerated(f, key);
+    },
+    [settings],
+  );
+
+  const saveFileToFolder = useCallback(
+    async (f: GeneratedFile) => {
+      const key = activeKey(settings);
+      if (!key) throw new Error("API 키가 없습니다.");
+      if (!folder) throw new Error("연결된 폴더가 없습니다.");
+      const blob = await fetchGeneratedBlob(f, key);
+      const saved = await saveToFolder(folder, f.name, blob);
+      setNotice(`${folder.name} 폴더에 "${saved}"로 저장했습니다.`);
+    },
+    [folder, settings],
+  );
+
+  /* ---------------- 폴더 ---------------- */
+
+  const connectFolder = useCallback(async () => {
+    const handle = await pickFolder();
+    if (handle) {
+      setFolder(handle);
+      setNotice(`"${handle.name}" 폴더를 연결했습니다.`);
+    }
+  }, []);
+
+  const openFolderPicker = useCallback(async () => {
+    if (!folder) return;
+    setFolderOpen(true);
+    setFolderLoading(true);
+    setFolderEntries(await listFiles(folder));
+    setFolderLoading(false);
+  }, [folder]);
+
+  const pickFromFolder = useCallback(
+    async (names: string[]) => {
+      setFolderOpen(false);
+      if (!folder) return;
+      const files: File[] = [];
+      for (const name of names) {
+        const f = await readFile(folder, name);
+        if (f) files.push(f);
+      }
+      if (files.length) await addFiles(files);
+    },
+    [addFiles, folder],
+  );
 
   /* ---------------- tasks ---------------- */
 
@@ -212,13 +338,19 @@ export default function Page() {
   /* ---------------- chat ---------------- */
 
   const run = useCallback(
-    async (convId: string, history: ChatMessage[]) => {
+    async (convId: string, history: ChatMessage[], containerId?: string) => {
       const assistantId = uid();
       patchConversation(convId, (c) => ({
         ...c,
         messages: [...c.messages, { id: assistantId, role: "assistant", content: "", createdAt: Date.now() }],
         updatedAt: Date.now(),
       }));
+
+      const patchMsg = (fn: (m: ChatMessage) => ChatMessage) =>
+        patchConversation(convId, (c) => ({
+          ...c,
+          messages: c.messages.map((m) => (m.id === assistantId ? fn(m) : m)),
+        }));
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -229,12 +361,7 @@ export default function Page() {
       const flush = () => {
         frame = 0;
         const parsed = parseMood(buffer);
-        patchConversation(convId, (c) => ({
-          ...c,
-          messages: c.messages.map((m) =>
-            m.id === assistantId ? { ...m, content: buffer, mood: parsed.mood ?? m.mood } : m,
-          ),
-        }));
+        patchMsg((m) => ({ ...m, content: buffer, mood: parsed.mood ?? m.mood }));
       };
 
       try {
@@ -246,21 +373,49 @@ export default function Page() {
           profile,
           userName: settings.userName,
           intimacy: settings.intimacy,
-          mcpUrl: settings.mcpUrl,
-          mcpToken: settings.mcpToken,
-          messages: history.map((m) => ({ role: m.role, content: m.content })),
+          tools: settings.tools,
+          mcpServers: settings.mcpServers,
+          containerId,
+          messages: history.map((m) => ({
+            role: m.role,
+            content: m.content,
+            attachments: m.attachments,
+          })),
           signal: controller.signal,
           onDelta: (t) => {
             buffer += t;
             if (!frame) frame = requestAnimationFrame(flush);
           },
+          onTool: (e) => {
+            patchMsg((m) => {
+              const list = m.tools ?? [];
+              if (e.phase === "start") {
+                if (list.some((t) => t.id === e.id)) return m;
+                return { ...m, tools: [...list, { id: e.id, name: e.name ?? "tool", done: false }] };
+              }
+              return {
+                ...m,
+                tools: list.map((t) => (t.id === e.id ? { ...t, done: true, ok: e.ok } : t)),
+              };
+            });
+          },
+          onFile: (f) => {
+            patchMsg((m) =>
+              (m.files ?? []).some((x) => x.id === f.id)
+                ? m
+                : { ...m, files: [...(m.files ?? []), f] },
+            );
+          },
+          onContainer: (id) => patchConversation(convId, (c) => ({ ...c, containerId: id })),
         });
         if (frame) cancelAnimationFrame(frame);
         flush();
         const finalMood = parseMood(buffer).mood ?? guessMood(buffer);
-        patchConversation(convId, (c) => ({
-          ...c,
-          messages: c.messages.map((m) => (m.id === assistantId ? { ...m, mood: finalMood } : m)),
+        patchMsg((m) => ({
+          ...m,
+          mood: finalMood,
+          // 끝났는데 아직 도는 것처럼 보이는 도구 표시는 정리합니다.
+          tools: (m.tools ?? []).map((t) => (t.done ? t : { ...t, done: true, ok: true })),
         }));
       } catch (err) {
         if (frame) cancelAnimationFrame(frame);
@@ -270,16 +425,11 @@ export default function Page() {
           : err instanceof Error
             ? err.message
             : "알 수 없는 오류가 발생했습니다.";
-        patchConversation(convId, (c) => ({
-          ...c,
-          messages: c.messages.map((m) =>
-            m.id === assistantId
-              ? aborted
-                ? { ...m, content: buffer || "(중지됨)" }
-                : { ...m, content: message, error: true }
-              : m,
-          ),
-        }));
+        patchMsg((m) =>
+          aborted
+            ? { ...m, content: buffer || "(중지됨)", tools: (m.tools ?? []).map((t) => ({ ...t, done: true })) }
+            : { ...m, content: message, error: true },
+        );
       } finally {
         abortRef.current = null;
         setBusy(false);
@@ -292,21 +442,28 @@ export default function Page() {
   const send = useCallback(
     (raw?: string) => {
       const text = (raw ?? input).trim();
-      if (!text || busy) return;
+      if ((!text && attachments.length === 0) || busy) return;
       if (!activeKey(settings)) {
         setSettingsOpen(true);
         return;
       }
 
-      const userMsg: ChatMessage = { id: uid(), role: "user", content: text, createdAt: Date.now() };
+      const userMsg: ChatMessage = {
+        id: uid(),
+        role: "user",
+        content: text,
+        createdAt: Date.now(),
+        ...(attachments.length ? { attachments } : {}),
+      };
       let convId = activeId;
       let history: ChatMessage[];
+      let containerId: string | undefined;
 
       if (!convId || !conversations.some((c) => c.id === convId)) {
         convId = uid();
         const conv: Conversation = {
           id: convId,
-          title: makeTitle(text),
+          title: makeTitle(text || attachments[0]?.name || "새 대화"),
           mode: "assist",
           messages: [userMsg],
           createdAt: Date.now(),
@@ -317,6 +474,7 @@ export default function Page() {
         setActiveId(convId);
       } else {
         const existing = conversations.find((c) => c.id === convId)!;
+        containerId = existing.containerId;
         history = [...existing.messages.filter((m) => !m.error), userMsg];
         patchConversation(convId, (c) => ({
           ...c,
@@ -326,10 +484,11 @@ export default function Page() {
       }
 
       setInput("");
+      setAttachments([]);
       setTimeout(() => scrollToBottom(), 40);
-      void run(convId, history);
+      void run(convId, history, containerId);
     },
-    [activeId, busy, conversations, input, patchConversation, run, scrollToBottom, settings],
+    [activeId, attachments, busy, conversations, input, patchConversation, run, scrollToBottom, settings],
   );
 
   const retry = useCallback(() => {
@@ -337,7 +496,7 @@ export default function Page() {
     const kept = active.messages.filter((m) => !m.error);
     if (!kept.some((m) => m.role === "user")) return;
     patchConversation(active.id, (c) => ({ ...c, messages: kept }));
-    void run(active.id, kept);
+    void run(active.id, kept, active.containerId);
   }, [active, patchConversation, run]);
 
   const pickForm = useCallback((preset: FormPreset) => {
@@ -358,6 +517,7 @@ export default function Page() {
           setBusy(false);
           setActiveId(null);
           setInput("");
+          setAttachments([]);
           setSidebarOpen(false);
         }}
         onSelect={(id) => {
@@ -383,21 +543,32 @@ export default function Page() {
         onPickForm={pickForm}
         onClose={() => setSidebarOpen(false)}
         footer={
-          <AccountBar
-            session={session}
-            syncing={syncing}
-            syncedAt={syncedAt}
-            onSignOut={async () => {
-              await signOut();
-              markRev(0);
-              setSession((s) => (s ? { ...s, user: null } : s));
-              syncReady.current = false;
-            }}
-            onOpenSettings={() => {
-              setSettingsOpen(true);
-              setSidebarOpen(false);
-            }}
-          />
+          <>
+            <FolderBar
+              supported={fsSupported}
+              name={folder?.name ?? null}
+              onConnect={connectFolder}
+              onDisconnect={async () => {
+                await forgetFolder();
+                setFolder(null);
+              }}
+            />
+            <AccountBar
+              session={session}
+              syncing={syncing}
+              syncedAt={syncedAt}
+              onSignOut={async () => {
+                await signOut();
+                markRev(0);
+                setSession((s) => (s ? { ...s, user: null } : s));
+                syncReady.current = false;
+              }}
+              onOpenSettings={() => {
+                setSettingsOpen(true);
+                setSidebarOpen(false);
+              }}
+            />
+          </>
         }
       />
 
@@ -435,9 +606,12 @@ export default function Page() {
                       <AssistantBubble
                         message={m}
                         streaming={busy && i === messages.length - 1}
+                        folderConnected={Boolean(folder)}
                         onRetry={m.error ? retry : undefined}
                         onAddTasks={addTasks}
                         onExportTasks={exportParsed}
+                        onDownloadFile={downloadFile}
+                        onSaveFile={saveFileToFolder}
                       />
                     )}
                   </div>
@@ -448,15 +622,43 @@ export default function Page() {
           )}
         </div>
 
+        {notice && (
+          <div className="border-t border-line bg-surface2 px-4 py-2">
+            <p className="mx-auto flex max-w-3xl items-center gap-2 text-xs text-ink2">
+              <span className="flex-1">{notice}</span>
+              <button onClick={() => setNotice("")} className="shrink-0 text-muted hover:text-ink">
+                닫기
+              </button>
+            </p>
+          </div>
+        )}
+
         <Composer
           value={input}
           busy={busy}
           disabled={false}
+          canAttach={canAttach}
+          attachments={attachments}
+          uploading={uploading}
+          folderConnected={Boolean(folder)}
           onChange={setInput}
           onSend={() => send()}
           onStop={() => abortRef.current?.abort()}
+          onFiles={(files) => void addFiles(files)}
+          onRemoveAttachment={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
+          onOpenFolder={() => void openFolderPicker()}
         />
       </main>
+
+      {folderOpen && folder && (
+        <FolderPicker
+          folderName={folder.name}
+          entries={folderEntries}
+          loading={folderLoading}
+          onPick={(names) => void pickFromFolder(names)}
+          onClose={() => setFolderOpen(false)}
+        />
+      )}
 
       {settingsOpen && (
         <SettingsModal

@@ -199,6 +199,64 @@ export function IconInbox({ className = "" }: P) {
   );
 }
 
+export function IconClip({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`${base} ${className}`}>
+      <path
+        d="M20 11.5 12.2 19a4.5 4.5 0 0 1-6.4-6.4l7.6-7.6a3 3 0 0 1 4.3 4.3l-7.6 7.6a1.5 1.5 0 0 1-2.2-2.2l7-7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function IconFile({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`${base} ${className}`}>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" strokeLinejoin="round" />
+      <path d="M14 3v5h5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconFolder({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`${base} ${className}`}>
+      <path
+        d="M4 7.5A1.5 1.5 0 0 1 5.5 6h3.2a1.5 1.5 0 0 1 1.2.6l.9 1.2h8.7A1.5 1.5 0 0 1 21 9.3v8.2a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 4 17.5z"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function IconGlobe({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`${base} ${className}`}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3.5 9.5h17M3.5 14.5h17M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" />
+    </svg>
+  );
+}
+
+export function IconPlug({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`${base} ${className}`}>
+      <path d="M9 3v5M15 3v5M6.5 8h11v3.5A5.5 5.5 0 0 1 12 17a5.5 5.5 0 0 1-5.5-5.5z" strokeLinejoin="round" />
+      <path d="M12 17v4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconSpinner({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={`${base} ${className} animate-spin`}>
+      <path d="M12 3a9 9 0 1 0 9 9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export const MODE_ICONS: Record<string, (p: P) => React.ReactElement> = {
   compass: IconCompass,
   chat: IconChat,

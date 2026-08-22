@@ -8,8 +8,10 @@ export type SessionInfo = {
   user: SessionUser | null;
 };
 
-/** API keys and the MCP token never leave the device — they are stripped here. */
-export type SyncedSettings = Omit<Settings, "keys" | "mcpToken">;
+/** API 키와 MCP 토큰은 기기 밖으로 나가지 않습니다. 여기서 걷어냅니다. */
+export type SyncedSettings = Omit<Settings, "keys" | "mcpToken" | "mcpServers"> & {
+  mcpServers: Omit<Settings["mcpServers"][number], "token">[];
+};
 
 export type SyncPayload = {
   conversations: Conversation[];
@@ -20,15 +22,26 @@ export type SyncPayload = {
 const REV_KEY = "kimteacher.syncrev.v1";
 
 export function stripSecrets(s: Settings): SyncedSettings {
-  const { keys: _keys, mcpToken: _mcpToken, ...rest } = s;
+  const { keys: _keys, mcpToken: _mcpToken, mcpServers, ...rest } = s;
   void _keys;
   void _mcpToken;
-  return rest;
+  return {
+    ...rest,
+    mcpServers: (mcpServers ?? []).map(({ token: _token, ...server }) => {
+      void _token;
+      return server;
+    }),
+  };
 }
 
 export function mergeSettings(local: Settings, remote: SyncedSettings | undefined): Settings {
   if (!remote) return local;
-  return { ...local, ...remote, keys: local.keys, mcpToken: local.mcpToken };
+  // 원격에는 토큰이 없으므로, 같은 서버가 이 기기에 있으면 토큰을 살려 둡니다.
+  const mcpServers = (remote.mcpServers ?? []).map((server) => ({
+    ...server,
+    token: local.mcpServers?.find((l) => l.id === server.id)?.token ?? "",
+  }));
+  return { ...local, ...remote, keys: local.keys, mcpServers };
 }
 
 export function mergeConversations(local: Conversation[], remote: Conversation[]): Conversation[] {

@@ -1,6 +1,7 @@
 import type { Conversation, Settings, TaskItem } from "./types";
 import { DEFAULT_PROVIDER, PROVIDERS, getProvider, type ProviderId } from "./providers";
 import { DEFAULT_INTIMACY } from "./agent";
+import { DEFAULT_TOOL_FLAGS, type McpServer } from "./tools";
 
 const CONV_KEY = "kimteacher.conversations.v1";
 const SETTINGS_KEY = "kimteacher.settings.v2";
@@ -27,8 +28,8 @@ export const DEFAULT_SETTINGS: Settings = {
   grade: "",
   subject: "",
   extraContext: "",
-  mcpUrl: "",
-  mcpToken: "",
+  tools: { ...DEFAULT_TOOL_FLAGS },
+  mcpServers: [],
 };
 
 function safeParse<T>(raw: string | null, fallback: T): T {
@@ -49,7 +50,24 @@ export function loadSettings(): Settings {
       ...stored,
       keys: { ...DEFAULT_SETTINGS.keys, ...(stored.keys ?? {}) },
       models: { ...DEFAULT_SETTINGS.models, ...(stored.models ?? {}) },
+      tools: { ...DEFAULT_TOOL_FLAGS, ...(stored.tools ?? {}) },
+      mcpServers: Array.isArray(stored.mcpServers) ? stored.mcpServers : [],
     };
+
+    // v5까지는 MCP 서버를 하나만 넣을 수 있었습니다. 있으면 목록으로 옮깁니다.
+    if (merged.mcpServers.length === 0 && stored.mcpUrl) {
+      merged.mcpServers = [
+        {
+          id: uid(),
+          name: "내 MCP 서버",
+          url: stored.mcpUrl,
+          token: stored.mcpToken ?? "",
+          enabled: true,
+        } satisfies McpServer,
+      ];
+    }
+    delete merged.mcpUrl;
+    delete merged.mcpToken;
 
     // One-time migration from the single-provider v1 settings.
     if (!localStorage.getItem(SETTINGS_KEY)) {

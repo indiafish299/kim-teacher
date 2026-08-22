@@ -242,10 +242,37 @@ function intimacyBlock(level: Intimacy, userName: string): string {
 - 예시 뉘앙스: "${casual}, 이 건은 예산 세부내역만 꼼꼼히 채우면 반려 안 나요. 양식 맞춰뒀으니 한번 보세요."`;
 }
 
+/* ------------------------------------------------------------------ */
+/* 도구 사용 지침                                                        */
+/* ------------------------------------------------------------------ */
+
+const CODE_RULES = `### 파일 만들기 (코드 실행)
+- 엑셀(.xlsx), 워드(.docx), CSV, 차트 이미지처럼 **파일로 받아야 쓸모 있는 결과물**은 코드 실행으로 실제 파일을 만들어 줍니다. 표를 화면에만 그리고 끝내지 않습니다.
+- 명렬표, 좌석표, 집계표, 성적 통계, 예산 내역, 설문 결과 정리가 여기에 해당합니다.
+- 사용자가 올린 엑셀·CSV·한글 파일은 코드로 열어 실제 값을 확인한 뒤 답합니다. 내용을 짐작해서 말하지 않습니다.
+- 만든 파일은 반드시 \`$OUTPUT_DIR\`(없으면 \`/tmp/outputs\`)에 저장합니다. 그래야 사용자가 내려받을 수 있습니다.
+- **샌드박스에는 한글 글꼴이 없습니다.** 차트나 이미지를 만들 때 축·범례·제목은 영어나 숫자로 적고, 한글 설명은 답변 본문에 씁니다. 엑셀·워드 파일 안의 한글은 아무 문제 없으니 그대로 씁니다.
+- 엑셀은 openpyxl, 워드는 python-docx, 차트는 matplotlib를 씁니다. 셀 너비와 머리행 정도는 보기 좋게 맞춰 줍니다.
+- 파일을 만든 뒤에는 무엇을 담았는지 두세 줄로 짧게 설명합니다. 코드는 보여주지 않습니다.`;
+
+const FETCH_RULES = `### 웹 페이지 읽기
+- 사용자가 링크를 주면 직접 열어 읽고 답합니다. "링크를 열 수 없다"고 하지 않습니다.
+- 웹 검색 기능은 없습니다. 주소를 받지 않은 채로 인터넷을 뒤질 수는 없으니, 필요하면 사용자에게 링크를 달라고 합니다.
+- 교육청 공지나 지침을 읽었다면 **시행일과 출처를 함께** 밝힙니다. 학교마다 다른 부분은 여전히 "학교 규정 확인 필요"로 표시합니다.`;
+
+function mcpRules(names: string[]): string {
+  return `### 연결된 외부 도구
+- 지금 연결된 도구: ${names.join(", ")}
+- 일정 확인·등록, 파일 검색처럼 이 도구로 처리할 수 있는 일은 사용자에게 방법을 설명하지 말고 직접 처리합니다.
+- 일정을 등록하거나 파일을 바꾸는 것처럼 **되돌리기 어려운 작업은 실행 전에 무엇을 할지 한 줄로 알리고 확인을 받습니다.** 조회는 그냥 하면 됩니다.`;
+}
+
 export type PromptOptions = {
   userName?: string;
   intimacy?: Intimacy;
   profile?: string;
+  tools?: { webFetch: boolean; code: boolean };
+  mcpNames?: string[];
 };
 
 export function buildSystemPrompt(modeId: ModeId, opts: PromptOptions = {}): string {
@@ -258,6 +285,12 @@ export function buildSystemPrompt(modeId: ModeId, opts: PromptOptions = {}): str
     ? `\n\n## 사용자(선생님) 정보\n${opts.profile.trim()}\n이 정보를 답변의 기본 전제로 삼되, 사용자가 다르게 말하면 그쪽을 따릅니다.`
     : "";
 
+  const toolParts: string[] = [];
+  if (opts.tools?.code) toolParts.push(CODE_RULES);
+  if (opts.tools?.webFetch) toolParts.push(FETCH_RULES);
+  if (opts.mcpNames?.length) toolParts.push(mcpRules(opts.mcpNames));
+  const toolBlock = toolParts.length ? `\n\n## 쓸 수 있는 도구\n\n${toolParts.join("\n\n")}` : "";
+
   return `${BASE_PERSONA}
 
 ${moodPromptBlock()}
@@ -266,5 +299,5 @@ ${intimacyBlock(level, opts.userName ?? "")}
 
 ${header}
 
-${mode.rules}${profileBlock}`;
+${mode.rules}${toolBlock}${profileBlock}`;
 }
