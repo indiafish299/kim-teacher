@@ -1,44 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "@/lib/types";
+import { splitBlocks, toPlainText, type ParsedTask } from "@/lib/blocks";
+import { copyText, downloadText } from "@/lib/clipboard";
+import DocCard from "./DocCard";
+import TaskWidget from "./TaskWidget";
 import { IconCheck, IconCopy, IconDownload, IconRefresh } from "./Icons";
-
-function useCopy() {
-  const [done, setDone] = useState(false);
-  const copy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-    }
-    setDone(true);
-    setTimeout(() => setDone(false), 1600);
-  };
-  return { done, copy };
-}
-
-function download(text: string) {
-  const stamp = new Date().toISOString().slice(0, 10);
-  const blob = new Blob(["﻿" + text], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `김선생_${stamp}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 export function UserBubble({ message }: { message: ChatMessage }) {
   return (
@@ -54,12 +24,17 @@ export function AssistantBubble({
   message,
   streaming,
   onRetry,
+  onAddTasks,
+  onExportTasks,
 }: {
   message: ChatMessage;
   streaming?: boolean;
   onRetry?: () => void;
+  onAddTasks: (group: string, items: ParsedTask[]) => void;
+  onExportTasks: (group: string, items: ParsedTask[]) => void;
 }) {
-  const { done, copy } = useCopy();
+  const [copied, setCopied] = useState(false);
+  const segments = useMemo(() => splitBlocks(message.content), [message.content]);
 
   if (message.error) {
     return (
@@ -79,6 +54,8 @@ export function AssistantBubble({
     );
   }
 
+  const lastIndex = segments.length - 1;
+
   return (
     <div className="fadeup group">
       <div className="mb-1.5 flex items-center gap-2">
@@ -88,26 +65,55 @@ export function AssistantBubble({
         <span className="text-xs font-medium text-muted">김선생</span>
       </div>
 
-      <div className={`answer ${streaming && !message.content ? "text-muted" : ""}`}>
-        {message.content ? (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-        ) : (
-          <span className="text-sm text-muted">생각하는 중…</span>
-        )}
-        {streaming && message.content && <span className="caret" />}
-      </div>
+      {!message.content && (
+        <p className="text-sm text-muted">{streaming ? "생각하는 중…" : "(내용 없음)"}</p>
+      )}
+
+      {segments.map((seg, i) => {
+        const isLast = i === lastIndex;
+        if (seg.kind === "doc") {
+          return <DocCard key={i} raw={seg.text} streaming={streaming && seg.open} />;
+        }
+        if (seg.kind === "tasks") {
+          return (
+            <TaskWidget
+              key={i}
+              raw={seg.text}
+              streaming={streaming && seg.open}
+              onAdd={onAddTasks}
+              onExport={onExportTasks}
+            />
+          );
+        }
+        return (
+          <div key={i} className="answer">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{seg.text}</ReactMarkdown>
+            {streaming && isLast && <span className="caret" />}
+          </div>
+        );
+      })}
 
       {!streaming && message.content && (
         <div className="mt-3 flex items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
           <button
-            onClick={() => copy(message.content)}
+            onClick={async () => {
+              if (await copyText(toPlainText(message.content))) {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1600);
+              }
+            }}
             className="inline-flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-xs font-medium text-ink2 hover:bg-surface2"
           >
-            {done ? <IconCheck className="h-3.5 w-3.5 text-accent" /> : <IconCopy className="h-3.5 w-3.5" />}
-            {done ? "복사됨" : "복사"}
+            {copied ? <IconCheck className="h-3.5 w-3.5 text-accent" /> : <IconCopy className="h-3.5 w-3.5" />}
+            {copied ? "복사됨" : "전체 복사"}
           </button>
           <button
-            onClick={() => download(message.content)}
+            onClick={() =>
+              downloadText(
+                toPlainText(message.content),
+                `김선생_${new Date().toISOString().slice(0, 10)}.txt`,
+              )
+            }
             className="inline-flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-xs font-medium text-ink2 hover:bg-surface2"
           >
             <IconDownload className="h-3.5 w-3.5" />

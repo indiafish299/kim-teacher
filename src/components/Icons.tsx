@@ -147,6 +147,58 @@ export function IconKey({ className = "" }: P) {
   );
 }
 
+export function IconCalendar({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`${base} ${className}`}>
+      <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+      <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconList({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`${base} ${className}`}>
+      <path d="M9 6h11M9 12h11M9 18h11" strokeLinecap="round" />
+      <path d="m3.5 6 1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconBookmark({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`${base} ${className}`}>
+      <path d="M6.5 4h11a1 1 0 0 1 1 1v15l-6.5-4-6.5 4V5a1 1 0 0 1 1-1Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconChevron({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={`${base} ${className}`}>
+      <path d="m8 10 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconPrint({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`${base} ${className}`}>
+      <path d="M7 9V4h10v5M7 19H5.5A1.5 1.5 0 0 1 4 17.5v-5A1.5 1.5 0 0 1 5.5 11h13a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H17" strokeLinejoin="round" />
+      <rect x="7" y="15" width="10" height="5.5" rx="1" />
+    </svg>
+  );
+}
+
+export function IconInbox({ className = "" }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={`${base} ${className}`}>
+      <path d="M4 13.5 6 5h12l2 8.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" strokeLinejoin="round" />
+      <path d="M4 13.5h4l1 2.5h6l1-2.5h4" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export const MODE_ICONS: Record<string, (p: P) => React.ReactElement> = {
   compass: IconCompass,
   chat: IconChat,

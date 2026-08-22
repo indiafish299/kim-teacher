@@ -6,12 +6,16 @@
 ## 특징
 
 - **통합 비서 + 4개 전문 모드** — 업무 상담 / 공문·통신문 / 수업 자료 / 생활기록부
+- **AI 사업자 4곳 지원** — Claude · ChatGPT · Gemini · Grok. 교사가 가진 키를 골라 씁니다.
+- **인터랙티브 결과물** — 문서는 복사·인쇄 가능한 카드로, 준비 일정은 D-day 체크리스트 위젯으로 나옵니다.
+- **업무 체크리스트** — 대화에서 나온 준비 일정을 사이드바에 담아 D-day로 관리하고, `.ics`로 내보내 구글·아웃룩 캘린더에 넣습니다.
+- **즐겨찾는 양식 퀵버튼** — 가정통신문, 품의, 기안, 생기부, 지도안 등 12종 프리셋
 - **생활기록부 기재요령 반영** — 명사형 종결, 기재 금지 항목 회피, 글자수 표기
-- **사용자 API 키 방식** — 각 교사가 자신의 Anthropic API 키를 입력해 사용합니다.
-  키는 **브라우저 localStorage에만** 저장되며 서버에 기록되지 않습니다.
-  API 라우트는 요청 헤더로 받은 키를 그대로 Anthropic에 전달하는 프록시 역할만 합니다.
-- **대화 기록 로컬 저장** — 대화도 브라우저에만 저장됩니다. 서버 DB가 없습니다.
-- 스트리밍 응답, 마크다운·표 렌더링, 복사 / txt 저장, 다크 모드, 모바일 대응
+- **사용자 API 키 방식** — 키는 **브라우저 localStorage에만** 저장되며 서버에 기록되지 않습니다.
+  API 라우트는 요청 헤더로 받은 키를 그대로 각 사업자에게 전달하고, 서로 다른 SSE 형식을 하나로 정규화하는 프록시 역할만 합니다.
+- **대화·업무 기록 로컬 저장** — 서버 DB가 없습니다.
+- **고급: 원격 MCP 서버 연결** — Claude 사용 시 설정에서 MCP 서버 URL과 토큰을 넣으면 구글 캘린더 같은 외부 도구를 직접 씁니다. (토큰은 직접 발급)
+- 스트리밍 응답, 마크다운·표 렌더링, 복사 / txt / 인쇄, 다크 모드, 모바일 대응
 
 ## 개인정보
 
@@ -45,11 +49,38 @@ npx vercel --prod
 ```
 src/
   app/
-    page.tsx           메인 화면 (대화 상태 관리)
-    api/chat/route.ts  Anthropic 스트리밍 프록시
-  components/          Sidebar, Composer, MessageBubble, SettingsModal, Welcome
+    page.tsx            메인 화면 (대화·업무 상태 관리)
+    api/chat/route.ts   4개 사업자 스트리밍 프록시 + SSE 정규화
+  components/
+    TopNav              로고·상태·API키·일정 내보내기
+    Sidebar             업무 체크리스트 · 즐겨찾는 양식 · 대화 목록
+    MessageBubble       마크다운 + 특수 블록 분기
+    DocCard             복사·txt·인쇄 가능한 문서 카드
+    TaskWidget          D-day 체크리스트 위젯
+    Composer, Welcome, SettingsModal
   lib/
-    agent.ts           김선생 페르소나 + 모드별 프롬프트  ← 문구 수정은 주로 여기
-    stream.ts          SSE 파싱
-    storage.ts         localStorage 저장/불러오기
+    agent.ts            김선생 페르소나 + 모드별 프롬프트  ← 문구 수정은 주로 여기
+    providers.ts        사업자별 엔드포인트·모델·델타 추출  ← 모델 추가는 여기
+    blocks.ts           kt-doc / kt-tasks 블록 파싱
+    forms.ts            즐겨찾는 양식 프리셋
+    ics.ts              캘린더(.ics) 생성
+    stream.ts           정규화된 SSE 파싱
+    storage.ts          localStorage 저장/불러오기
 ```
+
+## 특수 블록 규약
+
+김선생은 결과물을 두 종류의 코드펜스로 감싸 출력하고, 앱이 이를 위젯으로 바꿉니다.
+
+    ```kt-doc
+    제목: 문서 제목
+    ---
+    본문
+    ```
+
+    ```kt-tasks
+    업무: 가을 현장체험학습
+    기준일: 2026-10-15
+    D-30 | 학교운영위원회 심의 자료 제출
+    2026-10-01 | 전세버스 계약 확인
+    ```

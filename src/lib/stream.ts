@@ -1,10 +1,14 @@
 import type { ModeId } from "./agent";
+import type { ProviderId } from "./providers";
 
 export type StreamArgs = {
   apiKey: string;
+  provider: ProviderId;
   model: string;
   mode: ModeId;
   profile: string;
+  mcpUrl?: string;
+  mcpToken?: string;
   messages: { role: "user" | "assistant"; content: string }[];
   signal: AbortSignal;
   onDelta: (text: string) => void;
@@ -12,9 +16,12 @@ export type StreamArgs = {
 
 export async function streamChat({
   apiKey,
+  provider,
   model,
   mode,
   profile,
+  mcpUrl,
+  mcpToken,
   messages,
   signal,
   onDelta,
@@ -25,7 +32,7 @@ export async function streamChat({
       "content-type": "application/json",
       "x-user-api-key": apiKey,
     },
-    body: JSON.stringify({ messages, mode, model, profile }),
+    body: JSON.stringify({ messages, mode, provider, model, profile, mcpUrl, mcpToken }),
     signal,
   });
 
@@ -44,7 +51,7 @@ export async function streamChat({
   const decoder = new TextDecoder();
   let buffer = "";
 
-  while (true) {
+  for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
@@ -57,14 +64,12 @@ export async function streamChat({
       for (const line of chunk.split("\n")) {
         if (!line.startsWith("data:")) continue;
         const payload = line.slice(5).trim();
-        if (!payload || payload === "[DONE]") continue;
+        if (!payload) continue;
+        if (payload === "[DONE]") return;
         try {
-          const event = JSON.parse(payload);
-          if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
-            onDelta(event.delta.text as string);
-          } else if (event.type === "error") {
-            throw new Error(event.error?.message ?? "스트리밍 중 오류가 발생했습니다.");
-          }
+          const event = JSON.parse(payload) as { text?: string; error?: string };
+          if (event.error) throw new Error(event.error);
+          if (event.text) onDelta(event.text);
         } catch (e) {
           if (e instanceof SyntaxError) continue;
           throw e;

@@ -2,28 +2,36 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar";
+import TopNav from "@/components/TopNav";
 import Composer from "@/components/Composer";
 import Welcome from "@/components/Welcome";
 import SettingsModal from "@/components/SettingsModal";
 import { AssistantBubble, UserBubble } from "@/components/MessageBubble";
-import { IconMenu, IconSettings } from "@/components/Icons";
-import { DEFAULT_MODE, getMode, type ModeId } from "@/lib/agent";
+import { DEFAULT_MODE, type ModeId } from "@/lib/agent";
 import { streamChat } from "@/lib/stream";
+import { downloadIcs } from "@/lib/ics";
+import type { ParsedTask } from "@/lib/blocks";
+import type { FormPreset } from "@/lib/forms";
 import {
   DEFAULT_SETTINGS,
+  activeKey,
+  activeModel,
   loadConversations,
   loadSettings,
+  loadTasks,
   makeTitle,
   saveConversations,
   saveSettings,
+  saveTasks,
   uid,
 } from "@/lib/storage";
-import type { ChatMessage, Conversation, Settings } from "@/lib/types";
+import type { ChatMessage, Conversation, Settings, TaskItem } from "@/lib/types";
 
 export default function Page() {
   const [ready, setReady] = useState(false);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mode, setMode] = useState<ModeId>(DEFAULT_MODE);
   const [input, setInput] = useState("");
@@ -33,25 +41,32 @@ export default function Page() {
 
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Hydrate from localStorage after mount. The server renders the empty state, so
+  // this has to run in an effect rather than a lazy initializer.
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     setSettings(loadSettings());
     setConversations(loadConversations());
+    setTasks(loadTasks());
     setReady(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   useEffect(() => {
     if (ready) saveConversations(conversations);
   }, [conversations, ready]);
 
+  useEffect(() => {
+    if (ready) saveTasks(tasks);
+  }, [tasks, ready]);
+
   const active = useMemo(
     () => conversations.find((c) => c.id === activeId) ?? null,
     [conversations, activeId],
   );
-
   const messages = active?.messages ?? [];
-  const hasKey = Boolean(settings.apiKey);
+  const hasKey = Boolean(activeKey(settings));
 
   const scrollToBottom = useCallback((smooth = true) => {
     bottomRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "end" });
@@ -75,31 +90,54 @@ export default function Page() {
     setConversations((prev) => prev.map((c) => (c.id === id ? fn(c) : c)));
   }, []);
 
-  const newConversation = useCallback(() => {
-    abortRef.current?.abort();
-    setBusy(false);
-    setActiveId(null);
-    setInput("");
-    setSidebarOpen(false);
+  /* ---------------- tasks ---------------- */
+
+  const addTasks = useCallback((group: string, items: ParsedTask[]) => {
+    setTasks((prev) => {
+      const fresh = items
+        .filter((i) => i.title.trim())
+        .filter((i) => !prev.some((t) => t.title === i.title && t.group === group))
+        .map<TaskItem>((i) => ({
+          id: uid(),
+          title: i.title.trim(),
+          due: i.due,
+          group,
+          done: false,
+          createdAt: Date.now(),
+        }));
+      return [...fresh, ...prev];
+    });
   }, []);
 
-  const deleteConversation = useCallback(
-    (id: string) => {
-      setConversations((prev) => prev.filter((c) => c.id !== id));
-      setActiveId((cur) => (cur === id ? null : cur));
-    },
-    [],
-  );
+  const exportParsed = useCallback((group: string, items: ParsedTask[]) => {
+    const asTasks: TaskItem[] = items
+      .filter((i) => i.due)
+      .map((i) => ({
+        id: uid(),
+        title: i.title,
+        due: i.due,
+        group,
+        done: false,
+        createdAt: Date.now(),
+      }));
+    if (asTasks.length) downloadIcs(asTasks);
+  }, []);
+
+  const exportAllTasks = useCallback(() => {
+    const pending = tasks.filter((t) => !t.done && t.due);
+    if (pending.length) downloadIcs(pending);
+  }, [tasks]);
+
+  const datedPending = useMemo(() => tasks.filter((t) => !t.done && t.due).length, [tasks]);
+
+  /* ---------------- chat ---------------- */
 
   const run = useCallback(
     async (convId: string, history: ChatMessage[], targetMode: ModeId) => {
       const assistantId = uid();
       patchConversation(convId, (c) => ({
         ...c,
-        messages: [
-          ...c.messages,
-          { id: assistantId, role: "assistant", content: "", createdAt: Date.now() },
-        ],
+        messages: [...c.messages, { id: assistantId, role: "assistant", content: "", createdAt: Date.now() }],
         updatedAt: Date.now(),
       }));
 
@@ -119,10 +157,13 @@ export default function Page() {
 
       try {
         await streamChat({
-          apiKey: settings.apiKey,
-          model: settings.model,
+          apiKey: activeKey(settings),
+          provider: settings.provider,
+          model: activeModel(settings),
           mode: targetMode,
           profile,
+          mcpUrl: settings.mcpUrl,
+          mcpToken: settings.mcpToken,
           messages: history.map((m) => ({ role: m.role, content: m.content })),
           signal: controller.signal,
           onDelta: (t) => {
@@ -156,25 +197,19 @@ export default function Page() {
         setTimeout(() => scrollToBottom(), 60);
       }
     },
-    [patchConversation, profile, scrollToBottom, settings.apiKey, settings.model],
+    [patchConversation, profile, scrollToBottom, settings],
   );
 
   const send = useCallback(
     (raw?: string) => {
       const text = (raw ?? input).trim();
       if (!text || busy) return;
-      if (!settings.apiKey) {
+      if (!activeKey(settings)) {
         setSettingsOpen(true);
         return;
       }
 
-      const userMsg: ChatMessage = {
-        id: uid(),
-        role: "user",
-        content: text,
-        createdAt: Date.now(),
-      };
-
+      const userMsg: ChatMessage = { id: uid(), role: "user", content: text, createdAt: Date.now() };
       let convId = activeId;
       let history: ChatMessage[];
 
@@ -206,36 +241,38 @@ export default function Page() {
       setTimeout(() => scrollToBottom(), 40);
       void run(convId, history, mode);
     },
-    [activeId, busy, conversations, input, mode, patchConversation, run, scrollToBottom, settings.apiKey],
+    [activeId, busy, conversations, input, mode, patchConversation, run, scrollToBottom, settings],
   );
 
   const retry = useCallback(() => {
     if (!active) return;
     const kept = active.messages.filter((m) => !m.error);
-    const lastUser = [...kept].reverse().find((m) => m.role === "user");
-    if (!lastUser) return;
+    if (!kept.some((m) => m.role === "user")) return;
     patchConversation(active.id, (c) => ({ ...c, messages: kept }));
     void run(active.id, kept, active.mode);
   }, [active, patchConversation, run]);
 
-  const stop = useCallback(() => abortRef.current?.abort(), []);
-
-  const handleSaveSettings = useCallback((s: Settings) => {
-    setSettings(s);
-    saveSettings(s);
-    setSettingsOpen(false);
-  }, []);
-
-  const currentMode = getMode(active?.mode ?? mode);
+  const pickForm = useCallback((preset: FormPreset) => {
+    setMode(preset.mode);
+    setInput(preset.prompt);
+    setSidebarOpen(false);
+    setTimeout(() => scrollToBottom(), 40);
+  }, [scrollToBottom]);
 
   return (
     <div className="flex h-dvh overflow-hidden bg-paper">
       <Sidebar
         open={sidebarOpen}
+        tasks={tasks}
         conversations={conversations}
         activeId={activeId}
-        hasKey={hasKey}
-        onNew={newConversation}
+        onNew={() => {
+          abortRef.current?.abort();
+          setBusy(false);
+          setActiveId(null);
+          setInput("");
+          setSidebarOpen(false);
+        }}
         onSelect={(id) => {
           abortRef.current?.abort();
           setActiveId(id);
@@ -243,41 +280,36 @@ export default function Page() {
           if (c) setMode(c.mode);
           setSidebarOpen(false);
         }}
-        onDelete={deleteConversation}
-        onOpenSettings={() => {
-          setSettingsOpen(true);
-          setSidebarOpen(false);
+        onDelete={(id) => {
+          setConversations((prev) => prev.filter((c) => c.id !== id));
+          setActiveId((cur) => (cur === id ? null : cur));
         }}
+        onToggleTask={(id) =>
+          setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
+        }
+        onDeleteTask={(id) => setTasks((prev) => prev.filter((t) => t.id !== id))}
+        onAddTask={(title, due) =>
+          setTasks((prev) => [
+            { id: uid(), title, due, group: "직접 추가", done: false, createdAt: Date.now() },
+            ...prev,
+          ])
+        }
+        onClearDone={() => setTasks((prev) => prev.filter((t) => !t.done))}
+        onPickForm={pickForm}
         onClose={() => setSidebarOpen(false)}
       />
 
       <main className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-2 border-b border-line bg-paper/90 px-3 py-2.5 backdrop-blur sm:px-5">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            aria-label="메뉴 열기"
-            className="rounded-lg p-2 text-ink2 hover:bg-surface2 md:hidden"
-          >
-            <IconMenu />
-          </button>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-ink">
-              {active ? active.title : "새 대화"}
-            </div>
-            <div className="truncate text-[11px] text-muted">
-              {currentMode.label} · {settings.model.replace("claude-", "")}
-            </div>
-          </div>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            aria-label="설정"
-            className="rounded-lg p-2 text-ink2 hover:bg-surface2"
-          >
-            <IconSettings />
-          </button>
-        </header>
+        <TopNav
+          settings={settings}
+          busy={busy}
+          taskCount={datedPending}
+          onOpenMenu={() => setSidebarOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onExportCalendar={exportAllTasks}
+        />
 
-        <div ref={scrollRef} className="scroll-thin flex-1 overflow-y-auto">
+        <div className="scroll-thin flex-1 overflow-y-auto">
           {!ready ? null : messages.length === 0 ? (
             <Welcome
               mode={mode}
@@ -297,6 +329,8 @@ export default function Page() {
                     message={m}
                     streaming={busy && i === messages.length - 1}
                     onRetry={m.error ? retry : undefined}
+                    onAddTasks={addTasks}
+                    onExportTasks={exportParsed}
                   />
                 ),
               )}
@@ -313,16 +347,21 @@ export default function Page() {
           onChange={setInput}
           onModeChange={setMode}
           onSend={() => send()}
-          onStop={stop}
+          onStop={() => abortRef.current?.abort()}
         />
       </main>
 
-      <SettingsModal
-        open={settingsOpen}
-        settings={settings}
-        onClose={() => setSettingsOpen(false)}
-        onSave={handleSaveSettings}
-      />
+      {settingsOpen && (
+        <SettingsModal
+          settings={settings}
+          onClose={() => setSettingsOpen(false)}
+          onSave={(s) => {
+            setSettings(s);
+            saveSettings(s);
+            setSettingsOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
