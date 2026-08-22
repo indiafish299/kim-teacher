@@ -1,3 +1,5 @@
+import { moodPromptBlock } from "./mood";
+
 export type ModeId = "assist" | "consult" | "document" | "lesson" | "record";
 
 export type Mode = {
@@ -258,6 +260,8 @@ export function buildSystemPrompt(modeId: ModeId, opts: PromptOptions = {}): str
     : "";
 
   return `${BASE_PERSONA}
+
+${moodPromptBlock()}
 
 ${intimacyBlock(level, opts.userName ?? "")}
 

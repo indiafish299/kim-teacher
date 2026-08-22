@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar";
-import TopNav from "@/components/TopNav";
+import ChatHeader from "@/components/ChatHeader";
 import Composer from "@/components/Composer";
 import Welcome from "@/components/Welcome";
 import SettingsModal from "@/components/SettingsModal";
-import { AssistantBubble, UserBubble } from "@/components/MessageBubble";
+import { AssistantBubble, DateChip, UserBubble } from "@/components/MessageBubble";
 import { DEFAULT_MODE, type ModeId } from "@/lib/agent";
 import { streamChat } from "@/lib/stream";
 import { downloadIcs } from "@/lib/ics";
+import { DEFAULT_MOOD, guessMood, parseMood, type MoodId } from "@/lib/mood";
 import type { ParsedTask } from "@/lib/blocks";
 import type { FormPreset } from "@/lib/forms";
 import {
@@ -19,7 +20,9 @@ import {
   loadConversations,
   loadSettings,
   loadTasks,
+  formatDateChip,
   makeTitle,
+  sameDay,
   saveConversations,
   saveSettings,
   saveTasks,
@@ -65,7 +68,7 @@ export default function Page() {
     () => conversations.find((c) => c.id === activeId) ?? null,
     [conversations, activeId],
   );
-  const messages = active?.messages ?? [];
+  const messages = useMemo(() => active?.messages ?? [], [active]);
   const hasKey = Boolean(activeKey(settings));
 
   const scrollToBottom = useCallback((smooth = true) => {
@@ -130,6 +133,18 @@ export default function Page() {
 
   const datedPending = useMemo(() => tasks.filter((t) => !t.done && t.due).length, [tasks]);
 
+  /** The header face follows the newest reply; it thinks while one is being written. */
+  const headerMood: MoodId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role !== "assistant") continue;
+      if (m.error) return "concerned";
+      if (m.mood) return m.mood;
+      break;
+    }
+    return busy ? "thinking" : DEFAULT_MOOD;
+  }, [messages, busy]);
+
   /* ---------------- chat ---------------- */
 
   const run = useCallback(
@@ -149,9 +164,12 @@ export default function Page() {
       let frame = 0;
       const flush = () => {
         frame = 0;
+        const parsed = parseMood(buffer);
         patchConversation(convId, (c) => ({
           ...c,
-          messages: c.messages.map((m) => (m.id === assistantId ? { ...m, content: buffer } : m)),
+          messages: c.messages.map((m) =>
+            m.id === assistantId ? { ...m, content: buffer, mood: parsed.mood ?? m.mood } : m,
+          ),
         }));
       };
 
@@ -175,6 +193,11 @@ export default function Page() {
         });
         if (frame) cancelAnimationFrame(frame);
         flush();
+        const finalMood = parseMood(buffer).mood ?? guessMood(buffer);
+        patchConversation(convId, (c) => ({
+          ...c,
+          messages: c.messages.map((m) => (m.id === assistantId ? { ...m, mood: finalMood } : m)),
+        }));
       } catch (err) {
         if (frame) cancelAnimationFrame(frame);
         const aborted = err instanceof DOMException && err.name === "AbortError";
@@ -302,8 +325,9 @@ export default function Page() {
       />
 
       <main className="flex min-w-0 flex-1 flex-col">
-        <TopNav
+        <ChatHeader
           settings={settings}
+          mood={headerMood}
           busy={busy}
           taskCount={datedPending}
           onOpenMenu={() => setSidebarOpen(true)}
@@ -323,21 +347,27 @@ export default function Page() {
               onOpenSettings={() => setSettingsOpen(true)}
             />
           ) : (
-            <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-              {messages.map((m, i) =>
-                m.role === "user" ? (
-                  <UserBubble key={m.id} message={m} />
-                ) : (
-                  <AssistantBubble
-                    key={m.id}
-                    message={m}
-                    streaming={busy && i === messages.length - 1}
-                    onRetry={m.error ? retry : undefined}
-                    onAddTasks={addTasks}
-                    onExportTasks={exportParsed}
-                  />
-                ),
-              )}
+            <div className="mx-auto w-full max-w-3xl space-y-3 px-3 py-4 sm:px-5 sm:py-6">
+              {messages.map((m, i) => {
+                const prev = messages[i - 1];
+                const showDate = !prev || !sameDay(prev.createdAt, m.createdAt);
+                return (
+                  <div key={m.id} className="space-y-3">
+                    {showDate && <DateChip label={formatDateChip(m.createdAt)} />}
+                    {m.role === "user" ? (
+                      <UserBubble message={m} />
+                    ) : (
+                      <AssistantBubble
+                        message={m}
+                        streaming={busy && i === messages.length - 1}
+                        onRetry={m.error ? retry : undefined}
+                        onAddTasks={addTasks}
+                        onExportTasks={exportParsed}
+                      />
+                    )}
+                  </div>
+                );
+              })}
               <div ref={bottomRef} className="h-2" />
             </div>
           )}

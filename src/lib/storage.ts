@@ -147,6 +147,29 @@ export function formatDay(ts: number) {
   return d.toLocaleDateString("ko-KR", { month: "long", day: "numeric" });
 }
 
+export function formatTime(ts: number) {
+  return new Date(ts).toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit" });
+}
+
+/** "오늘" / "어제" / "8월 20일 (수)" — used for the chat date separators. */
+export function formatDateChip(ts: number) {
+  const d = new Date(ts);
+  const now = new Date();
+  const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((startOf(now) - startOf(d)) / 86_400_000);
+  if (diff === 0) return "오늘";
+  if (diff === 1) return "어제";
+  return d.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
+}
+
+export function sameDay(a: number, b: number) {
+  const x = new Date(a);
+  const y = new Date(b);
+  return (
+    x.getFullYear() === y.getFullYear() && x.getMonth() === y.getMonth() && x.getDate() === y.getDate()
+  );
+}
+
 /** Whole-day difference between today and an ISO date. Negative = past. */
 export function daysUntil(iso: string): number | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;

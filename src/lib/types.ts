@@ -1,4 +1,5 @@
 import type { Intimacy, ModeId } from "./agent";
+import type { MoodId } from "./mood";
 import type { ProviderId } from "./providers";
 
 export type Role = "user" | "assistant";
@@ -9,6 +10,7 @@ export type ChatMessage = {
   content: string;
   createdAt: number;
   error?: boolean;
+  mood?: MoodId;
 };
 
 export type Conversation = {
