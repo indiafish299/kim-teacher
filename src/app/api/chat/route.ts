@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { buildSystemPrompt, type ModeId } from "@/lib/agent";
+import { buildSystemPrompt, type Intimacy, type ModeId } from "@/lib/agent";
 import {
   buildUpstreamRequest,
   extractDelta,
@@ -30,6 +30,8 @@ type Body = {
   provider?: string;
   model?: string;
   profile?: string;
+  userName?: string;
+  intimacy?: number;
   mcpUrl?: string;
   mcpToken?: string;
 };
@@ -61,11 +63,10 @@ export async function POST(req: NextRequest) {
     return json({ error: "보낼 메시지가 없습니다." }, 400);
   }
 
-  let system = buildSystemPrompt(mode);
   const profile = typeof body.profile === "string" ? body.profile.trim().slice(0, 2000) : "";
-  if (profile) {
-    system += `\n\n## 사용자(선생님) 정보\n${profile}\n이 정보를 답변의 기본 전제로 삼되, 사용자가 다르게 말하면 그쪽을 따릅니다.`;
-  }
+  const userName = typeof body.userName === "string" ? body.userName.trim().slice(0, 30) : "";
+  const intimacy: Intimacy = body.intimacy === 1 || body.intimacy === 3 ? body.intimacy : 2;
+  const system = buildSystemPrompt(mode, { userName, intimacy, profile });
 
   let mcp: McpConfig = null;
   const mcpUrl = typeof body.mcpUrl === "string" ? body.mcpUrl.trim() : "";

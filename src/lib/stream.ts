@@ -7,6 +7,8 @@ export type StreamArgs = {
   model: string;
   mode: ModeId;
   profile: string;
+  userName: string;
+  intimacy: number;
   mcpUrl?: string;
   mcpToken?: string;
   messages: { role: "user" | "assistant"; content: string }[];
@@ -20,6 +22,8 @@ export async function streamChat({
   model,
   mode,
   profile,
+  userName,
+  intimacy,
   mcpUrl,
   mcpToken,
   messages,
@@ -32,7 +36,7 @@ export async function streamChat({
       "content-type": "application/json",
       "x-user-api-key": apiKey,
     },
-    body: JSON.stringify({ messages, mode, provider, model, profile, mcpUrl, mcpToken }),
+    body: JSON.stringify({ messages, mode, provider, model, profile, userName, intimacy, mcpUrl, mcpToken }),
     signal,
   });
 

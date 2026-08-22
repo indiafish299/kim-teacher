@@ -1,41 +1,58 @@
 "use client";
 
-import { MODES, getMode, type ModeId } from "@/lib/agent";
+import { MODES, getMode, type Intimacy, type ModeId } from "@/lib/agent";
 import { MODE_ICONS, IconKey } from "./Icons";
 
-function greeting() {
+function address(userName: string, intimacy: Intimacy) {
+  const name = userName.trim();
+  if (intimacy === 1) return name ? `${name} 선생님` : "선생님";
+  return name ? `${name}샘` : "선생님";
+}
+
+function greeting(who: string, intimacy: Intimacy) {
   const h = new Date().getHours();
-  if (h < 6) return "늦은 시간까지 고생 많으십니다";
-  if (h < 12) return "좋은 아침입니다, 선생님";
-  if (h < 18) return "오늘도 수고 많으십니다";
-  return "퇴근은 하셨을까요, 선생님";
+  if (intimacy === 3) {
+    if (h < 6) return `${who}, 이 시간까지 뭐 하고 있어요`;
+    if (h < 12) return `${who}, 좋은 아침이에요`;
+    if (h < 18) return `${who}, 오늘도 달리는 중이죠`;
+    return `${who}, 퇴근은 했어요?`;
+  }
+  if (h < 6) return `${who}, 늦은 시간까지 고생이 많으십니다`;
+  if (h < 12) return `${who}, 좋은 아침입니다`;
+  if (h < 18) return `${who}, 오늘도 수고 많으십니다`;
+  return `${who}, 퇴근은 하셨을까요`;
 }
 
 export default function Welcome({
   mode,
   hasKey,
+  userName,
+  intimacy,
   onPick,
   onModeChange,
   onOpenSettings,
 }: {
   mode: ModeId;
   hasKey: boolean;
+  userName: string;
+  intimacy: Intimacy;
   onPick: (text: string) => void;
   onModeChange: (m: ModeId) => void;
   onOpenSettings: () => void;
 }) {
   const current = getMode(mode);
+  const who = address(userName, intimacy);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
       <div className="fadeup">
-        <p className="text-sm text-muted">{greeting()}</p>
+        <p className="text-sm text-muted">{greeting(who, intimacy)}</p>
         <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-ink sm:text-[1.75rem]">
           무엇을 도와드릴까요?
         </h1>
         <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-ink2">
-          20년차 선배 교사처럼 옆에서 거들겠습니다. 가정통신문과 공문 초안, 수업 자료, 생활기록부 문구,
-          그리고 혼자 결정하기 어려운 일까지 함께 봅니다.
+          일 잘하는 8년차 선배가 옆자리에서 거드는 느낌으로 씁니다. 가정통신문과 기안·품의 초안, 수업 자료,
+          생활기록부 문구, 그리고 혼자 결정하기 어려운 일까지 함께 봅니다.
         </p>
       </div>
 

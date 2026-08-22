@@ -162,6 +162,8 @@ export default function Page() {
           model: activeModel(settings),
           mode: targetMode,
           profile,
+          userName: settings.userName,
+          intimacy: settings.intimacy,
           mcpUrl: settings.mcpUrl,
           mcpToken: settings.mcpToken,
           messages: history.map((m) => ({ role: m.role, content: m.content })),
@@ -314,6 +316,8 @@ export default function Page() {
             <Welcome
               mode={mode}
               hasKey={hasKey}
+              userName={settings.userName}
+              intimacy={settings.intimacy}
               onPick={(t) => send(t)}
               onModeChange={setMode}
               onOpenSettings={() => setSettingsOpen(true)}

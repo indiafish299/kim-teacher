@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "선배교사 김선생 — 교사를 위한 AI 업무 파트너",
   description:
-    "가정통신문·공문 초안, 수업 자료, 생활기록부 문구, 업무 상담까지. 20년차 선배 교사처럼 도와주는 AI 비서입니다.",
+    "가정통신문·기안·품의 초안, 수업 자료, 생활기록부 문구, 업무 상담까지. 일 잘하는 선배 교사처럼 거드는 AI 동료입니다.",
   openGraph: {
     title: "선배교사 김선생",
     description: "가정통신문, 수업 자료, 생기부 문구, 업무 상담을 함께하는 교사용 AI 비서",

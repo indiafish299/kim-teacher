@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PROVIDERS, getProvider, type ProviderId } from "@/lib/providers";
+import { INTIMACY_OPTIONS } from "@/lib/agent";
 import type { Settings } from "@/lib/types";
 import { IconClose, IconKey } from "./Icons";
 
@@ -158,6 +159,54 @@ export default function SettingsModal({
                 ? `${provider.label}를 사용 중입니다`
                 : `${provider.label}로 전환하기`}
             </button>
+          </section>
+
+          {/* ---- 호칭과 말투 ---- */}
+          <section className="space-y-3 border-t border-linesoft pt-5">
+            <h3 className="text-sm font-semibold text-ink">호칭과 말투</h3>
+            <input
+              value={draft.userName}
+              onChange={(e) => setDraft({ ...draft, userName: e.target.value })}
+              placeholder="이름 (예: 종석) — 비워두면 '선생님'으로 부릅니다"
+              maxLength={20}
+              className={FIELD}
+            />
+
+            <div className="space-y-2">
+              {INTIMACY_OPTIONS.map((o) => {
+                const selected = draft.intimacy === o.level;
+                const name = draft.userName.trim();
+                const address = o.level === 1 ? `${name ? name + " " : ""}선생님` : name ? `${name}샘` : "선생님";
+                const sample = `${address}, ${o.sample.replace(/^선생님, /, "")}`;
+                return (
+                  <button
+                    key={o.level}
+                    onClick={() => setDraft({ ...draft, intimacy: o.level })}
+                    className={`w-full rounded-lg border px-3.5 py-3 text-left transition-colors ${
+                      selected ? "border-accent bg-accentsoft" : "border-line hover:bg-surface2"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border ${
+                          selected ? "border-accent bg-accent" : "border-line"
+                        }`}
+                      >
+                        {selected && <span className="h-1.5 w-1.5 rounded-full bg-onaccent" />}
+                      </span>
+                      <span className="text-sm font-medium text-ink">
+                        레벨 {o.level} · {o.label}
+                      </span>
+                      <span className="text-xs text-muted">{o.blurb}</span>
+                    </div>
+                    <p className="mt-1.5 pl-6 text-xs leading-relaxed text-ink2">&ldquo;{sample}&rdquo;</p>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs leading-relaxed text-muted">
+              말투만 달라집니다. 공문·품의·계획서의 서식과 완성도는 세 레벨 모두 동일합니다.
+            </p>
           </section>
 
           {/* ---- 내 정보 ---- */}

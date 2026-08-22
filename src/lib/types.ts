@@ -1,4 +1,4 @@
-import type { ModeId } from "./agent";
+import type { Intimacy, ModeId } from "./agent";
 import type { ProviderId } from "./providers";
 
 export type Role = "user" | "assistant";
@@ -32,6 +32,8 @@ export type TaskItem = {
 
 export type Settings = {
   provider: ProviderId;
+  userName: string;
+  intimacy: Intimacy;
   keys: Record<ProviderId, string>;
   models: Record<ProviderId, string>;
   schoolLevel: string;

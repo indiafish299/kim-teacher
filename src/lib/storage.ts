@@ -1,5 +1,6 @@
 import type { Conversation, Settings, TaskItem } from "./types";
 import { DEFAULT_PROVIDER, PROVIDERS, getProvider, type ProviderId } from "./providers";
+import { DEFAULT_INTIMACY } from "./agent";
 
 const CONV_KEY = "kimteacher.conversations.v1";
 const SETTINGS_KEY = "kimteacher.settings.v2";
@@ -18,6 +19,8 @@ function emptyByProvider(fn: (p: ProviderId) => string): Record<ProviderId, stri
 
 export const DEFAULT_SETTINGS: Settings = {
   provider: DEFAULT_PROVIDER,
+  userName: "",
+  intimacy: DEFAULT_INTIMACY,
   keys: emptyByProvider(() => ""),
   models: emptyByProvider((id) => getProvider(id).defaultModel),
   schoolLevel: "",
