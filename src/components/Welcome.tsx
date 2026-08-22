@@ -43,6 +43,8 @@ export default function Welcome({
 }) {
   const current = getMode(mode);
   const who = address(userName, intimacy);
+  const hello = greeting(who, intimacy);
+  const helloLine = `${hello}${/[?!]$/.test(hello) ? " " : ". "}오늘은 뭐부터 할까요?`;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
@@ -74,7 +76,7 @@ export default function Welcome({
         <div className="fadeup mt-7 flex items-end gap-2">
           <Avatar mood="cheerful" size={28} />
           <div className="max-w-[80%] rounded-2xl rounded-bl-[6px] border border-line bg-surface px-3.5 py-2.5 text-[0.9375rem] text-ink">
-            {greeting(who, intimacy)}. 오늘은 뭐부터 할까요?
+            {helloLine}
           </div>
         </div>
       )}
