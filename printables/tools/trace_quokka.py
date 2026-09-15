@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image
 from scipy import ndimage
 
 SRC = Path("/root/.claude/uploads/d6e42e9e-2e50-53c0-9062-cd73a35af685")
@@ -33,25 +33,15 @@ class Source(NamedTuple):
     file: str
     name: str
     ncolors: int
-    crop: tuple[int, int, int, int] | None = None   # 포스터에서 한 마리만 떼어낼 상자
-    smooth: bool = False                            # 뭉개진 원본의 경계를 다지고 시작할지
 
 
-# 화풍이 둘이다. 한 장의 인쇄물에는 한 쪽만 써야 따로 놀지 않는다.
-#   무테 4종  — 처음 받은 낱장 그림. 외곽선이 없고 색 경계가 또렷하다
-#   외곽선 5종 — 캐릭터 시트 포스터에서 떼어낸 것. 진한 테두리가 있고 경계가 부드럽다
+# 낱장 원본 4종만 쓴다. 외곽선이 없고 색 경계가 또렷한 한 화풍이라,
+# 일곱 장의 인쇄물에 섞어 써도 따로 놀지 않는다.
 SOURCES = [
     Source("bc96925a-image.jpg", "quokka-scarf", 8),      # 주황 목도리 + 웃는 얼굴
     Source("ccc82626-image.jpg", "quokka-surprised", 8),  # 눈 동그랗게, 입 벌림
     Source("a65b7631-image.jpg", "quokka-happy", 8),      # 볼 발그레 + 혀 + 두 손
     Source("de5bd83f-image.jpg", "quokka-earmuffs", 8),   # 회색 귀마개
-
-    # 포스터 쪽은 경계가 부드럽게 뭉개져 있어 평활화를 켠다. 상자는 털색 투영으로 구했다.
-    Source("6b6ca443-image.png", "quokka-bag", 6, (56, 175, 322, 590), True),
-    Source("6b6ca443-image.png", "quokka-stand", 6, (354, 178, 641, 595), True),
-    Source("6b6ca443-image.png", "quokka-cheer", 7, (671, 179, 954, 593), True),
-    Source("6b6ca443-image.png", "quokka-book", 7, (217, 684, 451, 983), True),
-    Source("6b6ca443-image.png", "quokka-hands", 6, (555, 701, 796, 986), True),
 ]
 
 MIN_AREA = 12.0   # 이보다 작은 조각은 JPEG 잡티로 보고 버린다
@@ -326,59 +316,8 @@ def is_background(rgb: tuple[int, int, int]) -> bool:
     return r > 228 and g > 228 and b > 228
 
 
-def isolate(img: Image.Image) -> Image.Image:
-    """그림 한 장에서 캐릭터 하나만 남기고 나머지를 흰색으로 지운다.
-
-    캐릭터 시트 포스터에서 한 마리씩 떼어낼 때 쓴다. 카드 제목("QUOKKA 4")과
-    알약("CHARACTER 4")은 캐릭터 외곽선과 같은 진한 색이라 팔레트로는 못 거른다.
-    크롭 상자를 아무리 조여도 글자 조각이 따라 들어오므로, 아예 '가운데 덩어리에
-    이어져 있지 않은 것'을 전부 지운다.
-
-    가방·책은 몸통에 닿아 있어 같은 덩어리로 딸려 온다. 눈·코처럼 털에 둘러싸인
-    부분도 털을 통해 이어지므로 남는다.
-    """
-    a = np.asarray(img, dtype=np.int32)
-    h, w, _ = a.shape
-
-    # 배경 후보: 흰 바탕과 카드의 베이지
-    subject = np.ones((h, w), dtype=bool)
-    for c in ((255, 255, 255), (240, 240, 240), (240, 240, 208), (245, 240, 225)):
-        subject &= np.abs(a - np.array(c)).sum(axis=2) >= 60
-    if not subject.any():
-        return img
-
-    # 캐릭터는 가운데 있다. 무게중심에서 가장 가까운 subject 픽셀을 씨앗으로 잡는다.
-    ys, xs = np.nonzero(subject)
-    seed_i = int(np.argmin((ys - ys.mean()) ** 2 + (xs - xs.mean()) ** 2))
-    keep = np.zeros((h, w), dtype=bool)
-    keep[ys[seed_i], xs[seed_i]] = True
-
-    while True:                       # 씨앗에서 subject 안으로만 번져 나간다
-        grown = keep.copy()
-        grown[1:, :] |= keep[:-1, :]
-        grown[:-1, :] |= keep[1:, :]
-        grown[:, 1:] |= keep[:, :-1]
-        grown[:, :-1] |= keep[:, 1:]
-        grown &= subject
-        if grown.sum() == keep.sum():
-            break
-        keep = grown
-
-    out = a.copy()
-    out[~keep] = 255
-    return Image.fromarray(out.astype(np.uint8))
-
-
 def trace(src: Source) -> str:
     img = Image.open(SRC / src.file).convert("RGB")
-    if src.crop is not None:
-        img = isolate(img.crop(src.crop))
-    if src.smooth:
-        # 캐릭터 시트 포스터는 색 경계가 부드럽게 번져 있다. 진한 외곽선이 털색으로
-        # 서서히 넘어가는 탓에, 그대로 양자화하면 그 중간값들이 팔레트 두 색으로
-        # 갈라지면서 테두리가 흰 점으로 끊어진다. 중간값 필터로 경계를 한 번 다져 둔다.
-        # (또렷한 낱장 원본에 쓰면 오히려 털끝의 삐침이 뭉개지므로 그쪽은 끈다.)
-        img = img.filter(ImageFilter.MedianFilter(3))
     labels, palette = quantize(img, src.ncolors)
 
     bg = {i for i, c in enumerate(palette) if is_background(c)}

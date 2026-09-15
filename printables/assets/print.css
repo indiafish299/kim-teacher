@@ -37,6 +37,9 @@ html, body {
   background: var(--cream);
   color: var(--ink);
   font-family: var(--font-body);
+  /* 한글은 기본 규칙상 글자 단위로 줄이 바뀐다. 그대로 두면 "다음 주 / 에 봐요" 처럼
+     낱말이 잘려 인쇄물에서 눈에 거슬린다. 낱말 단위로 끊게 한다. */
+  word-break: keep-all;
   /* 배경색을 인쇄에 포함시킨다. 크롬은 인쇄 대화상자의 '배경 그래픽' 체크박스가
      최종 결정권을 갖기 때문에, README 의 안내는 이것과 별개로 필요하다. */
   -webkit-print-color-adjust: exact;

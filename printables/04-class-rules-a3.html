@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>1학년 3반 우리 반 약속 (A3 세로)</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/print.css">
+<style>
+/* A3 세로 — 297 x 420 mm */
+@page { size: 297mm 420mm; margin: 0; }
+.sheet { width: 297mm; height: 420mm; }
+
+.head { gap: 4mm; flex-direction: column; align-items: center; text-align: center; }
+.head h1 { font-size: 15mm; }
+.head .sub { font-size: 5.5mm; margin-top: 1.5mm; }
+.head .mascot { height: 40mm; }
+
+ul { flex: 1; list-style: none; margin: 6mm 0 0; padding: 0;
+     display: flex; flex-direction: column; gap: 4mm; }
+li { flex: 1; display: flex; align-items: center; gap: 5mm;
+     background: var(--paper); border: 0.6mm solid var(--line);
+     border-radius: 3mm; padding: 0 5mm; }
+li .n { flex: none; width: 15mm; height: 15mm; border-radius: 50%;
+        background: var(--persimmon); color: #fff;
+        font-family: var(--font-title); font-size: 7.5mm;
+        display: flex; align-items: center; justify-content: center; }
+li .t { flex: 1; font-family: var(--font-title); font-size: 8.5mm;
+        line-height: 1.25; }
+li img { flex: none; height: 17mm; }
+
+.signbox { flex: none; margin-top: 6mm; }
+.signbox .label { font-family: var(--font-title); font-size: 6mm;
+                  padding: 0 0 2mm 1mm; }
+.signbox .hint { font-family: var(--font-hand); font-size: 4.6mm;
+                 color: var(--maple); padding: 0 0 2mm 1mm; }
+.signs { display: grid; grid-template-columns: repeat(8, 1fr);
+         grid-template-rows: repeat(2, 1fr); gap: 2.5mm; height: 34mm; }
+.sign { background: var(--paper); border: 0.5mm solid var(--line);
+        border-radius: 1.5mm; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="head">
+    <img class="mascot" src="assets/svg/quokka-scarf.svg" alt="">
+    <div>
+      <h1>우리 반 약속</h1>
+      <div class="sub">1학년 3반이 같이 정했습니다</div>
+    </div>
+  </div>
+
+  <ul>
+    <li><span class="n">1</span><span class="t">종이 치면 자리에 앉아 있기</span><img src="assets/svg/acorn.svg" alt=""></li>
+    <li><span class="n">2</span><span class="t">빌린 건 그날 안에 돌려주기</span><img src="assets/svg/chestnut.svg" alt=""></li>
+    <li><span class="n">3</span><span class="t">별명은 본인이 허락한 것만</span><img src="assets/svg/leaf-maple.svg" alt=""></li>
+    <li><span class="n">4</span><span class="t">실습실 전원은 마지막 사람이</span><img src="assets/svg/persimmon.svg" alt=""></li>
+    <li><span class="n">5</span><span class="t">쓰레기는 내 자리부터</span><img src="assets/svg/leaf-ginkgo.svg" alt=""></li>
+    <li><span class="n">6</span><span class="t">모르면 물어보기 — 쿼카도 물어봐요</span><img src="assets/svg/acorn.svg" alt=""></li>
+  </ul>
+
+  <div class="signbox">
+    <div class="label">우리가 약속합니다</div>
+    <div class="hint">코팅하기 전에 한 사람씩 서명하세요</div>
+    <div class="signs">
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
