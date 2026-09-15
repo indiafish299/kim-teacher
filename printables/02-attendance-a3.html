@@ -24,10 +24,18 @@ td { background: var(--paper); }            /* 보드마카로 쓰는 칸은 순
 .no { width: 9mm; }
 .nm { width: 30mm; }
 
-/* 머리 두 줄: 주차 이름 + 날짜 적는 빈칸 */
+/* 머리 두 줄: 주차 기간 + 날짜와 요일
+   (날짜는 tools/set_dates.py 로 언제든 다시 찍는다) */
 .wkrow th { height: 8mm; background: var(--ink); color: var(--cream);
             font-family: var(--font-title); font-size: 4.4mm; }
-.dates td { height: 8mm; }
+.dates td { height: 11mm; background: var(--cream); line-height: 1;
+            text-align: center; }
+.dates td b { display: block; font-family: var(--font-title); font-weight: 400;
+              font-size: 4.4mm; }
+.dates td i { display: block; font-style: normal; font-size: 2.8mm;
+              opacity: .55; margin-top: 0.6mm; }
+/* 주말 다음에 오는 월요일 쪽을 살짝 눌러 주 단위가 더 잘 끊겨 보이게 */
+.dates td.mon { background: var(--tint-fur); }
 
 tr th.no { font-family: var(--font-title); font-size: 4.2mm;
            background: var(--tint-fur); }
@@ -81,12 +89,11 @@ aside .cheer .circle { width: 15mm; height: 15mm; border-radius: 50%;
     <table>
       <tr class="wkrow">
         <th class="no"></th><th class="nm">이름</th>
-        <th colspan="5">1주</th><th colspan="5">2주</th>
-        <th colspan="5">3주</th><th colspan="5">4주</th>
+        <th colspan="5">1주 &middot; 9/14~9/18</th><th colspan="5">2주 &middot; 9/21~9/25</th><th colspan="5">3주 &middot; 9/28~10/2</th><th colspan="5">4주 &middot; 10/5~10/9</th>
       </tr>
       <tr class="dates">
-        <th class="no"></th><th class="nm">날짜 &rarr;</th>
-        <td></td><td></td><td></td><td></td><td class="wk"></td><td></td><td></td><td></td><td></td><td class="wk"></td><td></td><td></td><td></td><td></td><td class="wk"></td><td></td><td></td><td></td><td></td><td class="wk"></td>
+        <th class="no"></th><th class="nm">날짜</th>
+        <td class="mon"><b>14</b><i>월</i></td><td><b>15</b><i>화</i></td><td><b>16</b><i>수</i></td><td><b>17</b><i>목</i></td><td class="wk"><b>18</b><i>금</i></td><td class="mon"><b>21</b><i>월</i></td><td><b>22</b><i>화</i></td><td><b>23</b><i>수</i></td><td><b>24</b><i>목</i></td><td class="wk"><b>25</b><i>금</i></td><td class="mon"><b>28</b><i>월</i></td><td><b>29</b><i>화</i></td><td><b>30</b><i>수</i></td><td><b>10/1</b><i>목</i></td><td class="wk"><b>2</b><i>금</i></td><td class="mon"><b>5</b><i>월</i></td><td><b>6</b><i>화</i></td><td><b>7</b><i>수</i></td><td><b>8</b><i>목</i></td><td class="wk"><b>9</b><i>금</i></td>
       </tr>
       <tr><th class="no">1</th><th class="nm">구민준</th><td></td><td></td><td></td><td></td><td class="wk"></td><td></td><td></td><td></td><td></td><td class="wk"></td><td></td><td></td><td></td><td></td><td class="wk"></td><td></td><td></td><td></td><td></td><td class="wk"></td></tr>
       <tr><th class="no">2</th><th class="nm">김동우</th><td></td><td></td><td></td><td></td><td class="wk"></td><td></td><td></td><td></td><td></td><td class="wk"></td><td></td><td></td><td></td><td></td><td class="wk"></td><td></td><td></td><td></td><td></td><td class="wk"></td></tr>
