@@ -2,52 +2,51 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>오늘의 알림장 · 급식 (A3 가로)</title>
+<title>오늘의 알림장 · 급식 (A3 세로)</title>
 <link rel="stylesheet" href="assets/fonts.css">
 <link rel="stylesheet" href="assets/print.css">
 <style>
-/* A3 가로 — 420 x 297 mm */
-@page { size: 420mm 297mm; margin: 0; }
-.sheet { width: 420mm; height: 297mm; }
 
-.head { gap: 4mm; }
-.head h1 { font-size: 11mm; }
-.head .sub { font-size: 4.6mm; margin-top: 1mm; }
+/* A3 세로 — 297 x 420 mm.
+   가로에서는 알림(2/3)과 급식(1/3)이 나란히 있었다. 세로로 돌리면 둘 다 폭이
+   좁아져 못 쓰므로 위아래로 쌓는다. */
+@page { size: 297mm 420mm; margin: 0; }
+.sheet { width: 297mm; height: 420mm; }
+
+.head { gap: 3mm; }
+.head h1 { font-size: 10mm; }
+.head .sub { font-size: 4.2mm; margin-top: 1mm; }
 .head .mascot { height: 26mm; }
 
 /* 날짜 줄 — 매일 보드마카로 갈아 쓴다 */
-.datebar { flex: none; display: flex; align-items: center; gap: 3mm;
-           margin-top: 3.5mm; }
-.datebar .slot { display: flex; align-items: center; gap: 2mm;
-                 font-family: var(--font-title); font-size: 7mm; }
-.datebar .slot .blank { width: 34mm; height: 16mm; min-height: 0; }
+.datebar { flex: none; display: flex; align-items: center; gap: 2.5mm;
+           margin-top: 4mm; }
+.datebar .slot { display: flex; align-items: center; gap: 1.5mm;
+                 font-family: var(--font-title); font-size: 6mm; }
+.datebar .slot .blank { width: 23mm; height: 15mm; min-height: 0; }
 .datebar .spacer { flex: 1; }
-.weather { display: flex; gap: 2.5mm; }
-.weather .w { width: 19mm; height: 19mm; border-radius: 50%;
+.weather { display: flex; gap: 2mm; }
+.weather .w { width: 17mm; height: 17mm; border-radius: 50%;
               border: 0.6mm solid var(--line); background: var(--paper);
               display: flex; align-items: center; justify-content: center;
-              font-size: 4.2mm; }
+              font-size: 3.8mm; }
 
-.main { flex: 1; display: flex; gap: 5mm; margin-top: 4mm; }
-.col { display: flex; flex-direction: column; }
-.col .label { font-family: var(--font-title); font-size: 6.5mm;
-              padding: 0 0 2mm 1mm; }
-.notice { flex: 1; }
-.notice .lines { flex: 1; display: flex; flex-direction: column;
-                 justify-content: space-between; gap: 2.5mm; }
+.block { display: flex; flex-direction: column; margin-top: 5mm; }
+.block .label { flex: none; font-family: var(--font-title); font-size: 6.5mm;
+                padding: 0 0 2mm 1mm; }
+.notice { flex: 3; }
+.notice .lines { flex: 1; display: flex; flex-direction: column; gap: 2.5mm; }
 .notice .line { flex: 1; background: var(--paper);
                 border: 0.5mm solid var(--line); border-radius: 1.5mm; }
-.lunch { width: 130mm; }
+.lunch { flex: 2; }
+.lunch .body { flex: 1; display: flex; gap: 3mm; }
 .lunch .blank { flex: 1; border-width: 0.6mm; }
-.lunch .foot { flex: none; display: flex; align-items: center;
-               justify-content: flex-end; gap: 2mm; margin-top: 2mm; }
-.lunch .foot img { height: 24mm; }
-.lunch .foot span { font-family: var(--font-hand); font-size: 5mm;
-                    color: var(--maple); }
+.lunch .mascot { flex: none; align-self: flex-end; height: 34mm; }
 
 .tomorrow { flex: none; display: flex; align-items: center; gap: 3mm;
-            margin-top: 4mm; height: 22mm; }
-.tomorrow .label { font-family: var(--font-title); font-size: 6mm; white-space: nowrap; }
+            margin-top: 5mm; height: 22mm; }
+.tomorrow .label { font-family: var(--font-title); font-size: 5.5mm;
+                   white-space: nowrap; }
 .tomorrow .blank { flex: 1; height: 100%; }
 </style>
 </head>
@@ -57,11 +56,10 @@
     <img class="mascot" src="assets/svg/quokka-scarf.svg" alt="">
     <div>
       <h1>오늘의 알림장</h1>
-      <div class="sub">1학년 3반 · 매일 아침 새로 씁니다</div>
+      <div class="sub">1학년 3반 &middot; 매일 아침 새로 씁니다</div>
     </div>
     <div class="spacer"></div>
-    <img class="mascot" src="assets/svg/persimmon.svg" alt="" style="height:20mm">
-    <img class="mascot" src="assets/svg/leaf-ginkgo.svg" alt="" style="height:20mm">
+    <img class="mascot" src="assets/svg/persimmon.svg" alt="" style="height:18mm">
   </div>
 
   <div class="datebar">
@@ -69,33 +67,19 @@
     <div class="slot"><div class="blank"></div>일</div>
     <div class="slot"><div class="blank"></div>요일</div>
     <div class="spacer"></div>
-    <div class="weather">
-        <div class="w">맑음</div>
-        <div class="w">흐림</div>
-        <div class="w">비</div>
-        <div class="w">바람</div>
-        <div class="w">눈</div>
-    </div>
+    <div class="weather"><div class="w">맑음</div><div class="w">흐림</div><div class="w">비</div><div class="w">바람</div><div class="w">눈</div></div>
   </div>
 
-  <div class="main">
-    <div class="col notice">
-      <div class="label">오늘의 알림</div>
-      <div class="lines">
-        <div class="line"></div>
-        <div class="line"></div>
-        <div class="line"></div>
-        <div class="line"></div>
-        <div class="line"></div>
-      </div>
-    </div>
-    <div class="col lunch">
-      <div class="label">오늘 급식</div>
+  <div class="block notice">
+    <div class="label">오늘의 알림</div>
+    <div class="lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="block lunch">
+    <div class="label">오늘 급식</div>
+    <div class="body">
       <div class="blank"></div>
-      <div class="foot">
-        <span>맛있게 먹기</span>
-        <img src="assets/svg/quokka-happy.svg" alt="">
-      </div>
+      <img class="mascot" src="assets/svg/quokka-happy.svg" alt="">
     </div>
   </div>
 
