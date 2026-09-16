@@ -3,7 +3,8 @@
 
     python3 printables/tools/build_web.py
 
--> printables/web/   (이 폴더는 커밋한다. Pages 가 빌드 없이 그대로 서빙한다)
+-> public/board/   (커밋한다. Vercel 이 /board/ 로, Cloudflare Pages 는
+                    Build output directory 로 그대로 서빙한다)
 
        index.html        게시물 7장 목록
        01.html … 07.html 각 게시물
@@ -42,7 +43,11 @@ from build_bundle import SHEETS, extract, split_at_page
 
 HERE = Path(__file__).resolve().parent.parent
 ASSETS = HERE / "assets"
-OUT = HERE / "web"
+# Vercel 이 public/ 아래 파일을 그대로 서빙한다. 여기에 두면 이미 붙어 있는
+# 배포 파이프라인이 push 만으로 /board/ 주소를 만들어 준다.
+# Cloudflare Pages 를 쓰실 때도 Build output directory 를 public/board 로
+# 잡으면 같은 폴더를 그대로 받는다.
+OUT = HERE.parent / "public" / "board"
 THUMB_LONG = 600
 
 

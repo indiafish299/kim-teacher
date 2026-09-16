@@ -137,7 +137,6 @@ printables/
 │   ├── fonts.css         글꼴 선언
 │   ├── fonts/            Jua · Gaegu · Gowun Dodum (woff2, OFL)
 │   └── svg/              쿼카 4종 + 가을 소품 5종
-├── web/                  폰용 웹사이트 — Cloudflare Pages 가 이걸 서빙합니다
 ├── share/                단톡에 올릴 사진·PDF — 저장소에 안 올라갑니다
 ├── roster.local.json     학생 명단 — 저장소에 안 올라갑니다
 └── tools/
@@ -146,7 +145,7 @@ printables/
     ├── build_props.py    가을 소품(단풍잎·은행잎·도토리·밤·감) 생성
     ├── build_bundle.py   낱장 7종 → 학급칠판게시물.html
     ├── build_share.py    단톡용 사진 7장 + PDF + 문안
-    ├── build_web.py      폰용 웹사이트 → web/
+    ├── build_web.py      폰용 웹사이트 → ../public/board/
     ├── apply_roster.py   출결표 이름 채우기 / 비우기
     ├── check_overflow.py 종이 밖으로 넘치는지 검사
     └── check_bundle.py   번들이 낱장과 같은지 대조
@@ -186,27 +185,37 @@ PDF 는 확대가 편하지만 한 번 눌러야 열립니다.** 단톡에서 �
 python3 printables/tools/build_web.py
 ```
 
-`printables/web/` 에 정적 사이트가 만들어집니다. **이 폴더는 커밋합니다** — Cloudflare 가
-빌드 없이 그대로 서빙하기 때문에 파일이 저장소에 있어야 합니다.
+**`public/board/`** 에 만들어집니다. **이 폴더는 커밋합니다** — 빌드 과정 없이 파일을
+그대로 서빙하는 방식이라 저장소에 들어 있어야 합니다.
 
-### 처음 한 번, 대시보드에서 연결
+### Cloudflare Pages 연결 (처음 한 번)
 
-[dash.cloudflare.com](https://dash.cloudflare.com) 에서 이렇게 하세요. 3분이면 됩니다.
+[dash.cloudflare.com](https://dash.cloudflare.com) → Workers & Pages → Create →
+Pages → **Connect to Git** → `indiafish299/kim-teacher`
 
 | 항목 | 값 |
 |---|---|
-| 메뉴 | Workers & Pages → Create → Pages → **Connect to Git** |
-| 저장소 | `indiafish299/kim-teacher` |
 | Production branch | `main` |
 | Framework preset | **None** |
 | Build command | **비웁니다** |
-| Build output directory | **`printables/web`** |
+| Build output directory | **`public/board`** |
 
-저장하면 `<프로젝트이름>.pages.dev` 주소가 나옵니다. 그 주소를 단톡에 올리시면 됩니다.
-이후에는 **push 할 때마다 자동으로 다시 배포**됩니다.
+저장하면 `<프로젝트이름>.pages.dev` 주소가 나옵니다. 그 폴더가 사이트 뿌리가 되므로
+주소가 깔끔하게 끝납니다. 이후에는 `main` 에 push 할 때마다 자동으로 다시 배포됩니다.
 
-`main` 을 프로덕션 브랜치로 쓰려면 작업 브랜치를 먼저 머지해야 합니다. 머지 전에 미리
-보시려면 Production branch 에 현재 작업 브랜치 이름을 넣으셔도 됩니다.
+### Vercel 로도 열립니다 (설정 불필요)
+
+`public/` 아래에 두었기 때문에 이미 붙어 있는 Vercel 배포가 같은 파일을 서빙합니다.
+클라우드플레어를 연결하기 전에 확인하고 싶을 때 쓰세요.
+
+```
+https://kim-teacher.vercel.app/board/index.html
+```
+
+**`/index.html` 까지 붙여야 합니다.** `/board` 와 `/board/` 는 404 입니다 — Next.js 는
+`public/` 의 폴더에 index 파일을 자동으로 물려 주지 않습니다(직접 확인함). 게다가 목록
+페이지의 링크가 상대 경로(`01.html`)라 `/board` 로 열리면 `/01.html` 로 잘못 풀립니다.
+Cloudflare 쪽은 그 폴더가 뿌리라 이 문제가 없습니다.
 
 ### 알아 둘 것
 
