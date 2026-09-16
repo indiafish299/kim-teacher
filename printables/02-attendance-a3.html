@@ -18,12 +18,12 @@
 .head .sub { font-size: 4mm; margin-top: 1mm; }
 .head .mascot { height: 26mm; }
 
-/* 오늘 날짜. tools/set_dates.py 로 다시 찍는다. */
-.today { text-align: right; line-height: 1.05; }
-.today b { display: block; font-family: var(--font-title); font-weight: 400;
-           font-size: 7.5mm; color: var(--maple); }
-.today i { display: block; font-style: normal; font-size: 4mm;
-           opacity: .65; margin-top: 0.8mm; }
+/* 날짜는 코팅 위에 보드마카로 쓴다. 03 알림장 날짜줄과 같은 규격으로 맞춰
+   두 장이 나란히 붙었을 때 쓰는 칸이 따로 놀지 않게 한다. */
+.today { flex: none; display: flex; align-items: center; gap: 2mm; }
+.today .slot { display: flex; align-items: center; gap: 1.5mm;
+               font-family: var(--font-title); font-size: 5.5mm; }
+.today .slot .blank { width: 20mm; height: 13mm; min-height: 0; }
 
 table { flex: 1; border-collapse: collapse; table-layout: fixed;
         margin-top: 4mm; }
@@ -79,7 +79,12 @@ tr th.nm { background: var(--paper); font-size: 5mm; font-weight: 400;
       <div class="sub">해당하는 곳에 동그라미 &middot; 사유는 오른쪽 칸에</div>
     </div>
     <div class="spacer"></div>
-    <div class="today"><b>2026년 9월 15일</b><i>화요일</i></div></div>
+    <div class="today">
+      <div class="slot"><div class="blank"></div>월</div>
+      <div class="slot"><div class="blank"></div>일</div>
+      <div class="slot"><div class="blank"></div>요일</div>
+    </div>
+  </div>
 
   <table>
     <tr class="hd">

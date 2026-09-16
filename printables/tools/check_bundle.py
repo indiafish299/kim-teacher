@@ -16,8 +16,10 @@
 from __future__ import annotations
 
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -74,10 +76,21 @@ addEventListener('load', function () { setTimeout(function () {
 
 
 def run(args: list[str]) -> None:
-    subprocess.run([CHROME, "--headless", "--disable-gpu", "--no-sandbox",
-                    "--hide-scrollbars", "--disable-background-networking",
-                    "--no-first-run"] + args,
-                   capture_output=True, timeout=180)
+    """크롬을 한 번 띄운다.
+
+    프로필 폴더를 매번 새로 준다. 안 주면 기본 프로필을 공유하는데, 앞 번 실행이
+    남긴 잠금 때문에 두 번째 호출부터 창이 안 뜨고 빈 PDF/PNG 가 나온다.
+    이 도구는 장마다 크롬을 네 번 띄우므로 반드시 갈라 놔야 한다.
+    """
+    prof = tempfile.mkdtemp(prefix="chrome-chk-")
+    try:
+        subprocess.run([CHROME, "--headless", "--disable-gpu", "--no-sandbox",
+                        "--user-data-dir=" + prof,
+                        "--hide-scrollbars", "--disable-background-networking",
+                        "--no-first-run"] + args,
+                       capture_output=True, timeout=180)
+    finally:
+        shutil.rmtree(prof, ignore_errors=True)
 
 
 def pdf_size(path: Path) -> tuple[int, float, float]:

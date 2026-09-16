@@ -336,9 +336,8 @@ body.edit .sheet .blank { cursor: text; }
 }#s01 .legend .spacer{ flex: 1; }#s01 .legend .witty{ font-size: 8mm; }
 
 /* ===== s02 — 출결 특이사항 ===== */
-#s02 .sheet{ width: 297mm; height: 420mm; }#s02 .head{ gap: 3mm; }#s02 .head h1{ font-size: 9mm; }#s02 .head .sub{ font-size: 4mm; margin-top: 1mm; }#s02 .head .mascot{ height: 26mm; }#s02 .today{ text-align: right; line-height: 1.05; }#s02 .today b{ display: block; font-family: var(--font-title); font-weight: 400;
-           font-size: 7.5mm; color: var(--maple); }#s02 .today i{ display: block; font-style: normal; font-size: 4mm;
-           opacity: .65; margin-top: 0.8mm; }#s02 table{ flex: 1; border-collapse: collapse; table-layout: fixed;
+#s02 .sheet{ width: 297mm; height: 420mm; }#s02 .head{ gap: 3mm; }#s02 .head h1{ font-size: 9mm; }#s02 .head .sub{ font-size: 4mm; margin-top: 1mm; }#s02 .head .mascot{ height: 26mm; }#s02 .today{ flex: none; display: flex; align-items: center; gap: 2mm; }#s02 .today .slot{ display: flex; align-items: center; gap: 1.5mm;
+               font-family: var(--font-title); font-size: 5.5mm; }#s02 .today .slot .blank{ width: 20mm; height: 13mm; min-height: 0; }#s02 table{ flex: 1; border-collapse: collapse; table-layout: fixed;
         margin-top: 4mm; }#s02 th, #s02 td{ border: 0.3mm solid var(--line); padding: 0; }#s02 td{ background: var(--paper); }#s02 .no{ width: 13mm; }#s02 .nm{ width: 32mm; }#s02 .st{ width: 20mm; }#s02 .hd th{ height: 11mm; background: var(--ink); color: var(--cream);
          font-family: var(--font-title); font-size: 4.2mm; }#s02 tr th.no{ font-family: var(--font-title); font-size: 4.4mm;
            background: var(--tint-fur); }#s02 tr th.nm{ background: var(--paper); font-size: 5mm; font-weight: 400;
@@ -576,7 +575,12 @@ body.edit .sheet .blank { cursor: text; }
       <div class="sub">해당하는 곳에 동그라미 &middot; 사유는 오른쪽 칸에</div>
     </div>
     <div class="spacer"></div>
-    <div class="today"><b>2026년 9월 15일</b><i>화요일</i></div></div>
+    <div class="today">
+      <div class="slot"><div class="blank"></div>월</div>
+      <div class="slot"><div class="blank"></div>일</div>
+      <div class="slot"><div class="blank"></div>요일</div>
+    </div>
+  </div>
 
   <table>
     <tr class="hd">

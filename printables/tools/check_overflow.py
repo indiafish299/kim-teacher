@@ -15,8 +15,10 @@
 from __future__ import annotations
 
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent.parent
@@ -44,9 +46,13 @@ def probe(html: Path) -> tuple[float, float]:
     tmp = html.with_name("_probe-" + html.name)
     tmp.write_text(html.read_text(encoding="utf-8").replace("</body>", PROBE),
                    encoding="utf-8")
+    # 크롬에 프로필 폴더를 안 주면 기본 프로필을 쓰는데, 앞 번 실행이 남긴 잠금 때문에
+    # 두 번째 장부터 창이 아예 안 뜬다. 7장을 잇달아 재는 도구라 매번 새 프로필을 준다.
+    prof = tempfile.mkdtemp(prefix="chrome-probe-")
     try:
         out = subprocess.run(
             [CHROME, "--headless", "--disable-gpu", "--no-sandbox",
+             "--user-data-dir=" + prof,
              # 가장 큰 종이(A2, 1587x2245px)보다 넉넉한 창. 기본 800x600 으로 재면
              # 화면용 가운데 정렬·여백이 끼어들어 측정값이 흔들린다.
              "--window-size=1700,2400",
@@ -59,6 +65,7 @@ def probe(html: Path) -> tuple[float, float]:
         return int(m.group(1)) / PX_PER_MM, int(m.group(2)) / PX_PER_MM
     finally:
         tmp.unlink(missing_ok=True)
+        shutil.rmtree(prof, ignore_errors=True)
 
 
 def main() -> int:
