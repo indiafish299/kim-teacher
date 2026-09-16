@@ -1,0 +1,35 @@
+/* 인쇄물에 쓰는 글꼴. 저장소에 함께 넣어 두었다.
+ *
+ * 구글 폰트 CDN 을 링크하지 않는 이유: 학교 PC 의 네트워크 상태에 따라 글꼴이
+ * 안 받아지면 대체 글꼴로 조판되어 글자 폭이 달라지고, 그대로 인쇄하면 칸이
+ * 밀리거나 두 장으로 찢어진다. 인쇄물은 매번 똑같이 나와야 하므로 오프라인으로 간다.
+ *
+ * 세 글꼴 모두 SIL Open Font License 1.1 (같은 폴더의 OFL-*.txt 참고).
+ *   Jua          — 제목. 둥글고 굵어 멀리서도 읽힌다
+ *   Gaegu        — 위트 한마디. 손글씨 느낌
+ *   Gowun Dodum  — 표 본문, 이름칸. 가독성 위주
+ */
+
+@font-face {
+  font-family: "Jua";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;   /* 인쇄물이므로 대체 글꼴로 먼저 그리지 않고 기다린다 */
+  src: url("fonts/Jua-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Gaegu";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("fonts/Gaegu-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Gowun Dodum";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("fonts/GowunDodum-Regular.woff2") format("woff2");
+}

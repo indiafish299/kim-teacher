@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>1학년 3반 자리 배치표 (A4 가로)</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/print.css">
+<style>
+/* A4 가로 — 297 x 210 mm.
+   'A4 landscape' 대신 mm 실수치를 쓴다. 크롬이 용지를 훨씬 안정적으로 잡는다. */
+@page { size: 297mm 210mm; margin: 0; }
+.sheet { width: 297mm; height: 210mm; }
+
+.head h1 { font-size: 11mm; }
+.head .sub { font-size: 5.5mm; }
+.head .mascot { height: 26mm; }
+
+.band { height: 11mm; font-size: 5.5mm; margin-top: 2mm; }
+
+/* 창문 | 자리 4x4 | 복도 */
+.room {
+  flex: 1;
+  display: flex;
+  gap: 3mm;
+  margin-top: 3.5mm;
+}
+.side { width: 9mm; font-size: 4.6mm; }
+
+/* 짝끼리 붙은 책상 2개 × 4줄. 책상 하나를 한 덩어리로 그리고 그 안을 둘로 나눈다.
+   칸 16개를 똑같은 간격으로 늘어놓으면 누가 누구 짝인지 한눈에 안 들어온다. */
+.seats {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 5mm 10mm;
+}
+.desk {
+  display: flex;
+  background: var(--paper);
+  border: 0.6mm solid var(--line);
+  border-radius: 2.5mm;
+}
+.desk .seat + .seat { border-left: 0.4mm dashed var(--line); }
+
+/* 자리 한 칸: 번호는 인쇄, 이름은 보드마카로 쓰는 빈칸 */
+.seat {
+  position: relative;
+  flex: 1;
+}
+.seat .no {
+  position: absolute;
+  top: -2.5mm;
+  left: 3mm;
+  width: 8mm;
+  height: 8mm;
+  border-radius: 50%;
+  background: var(--persimmon);
+  color: #fff;
+  font-family: var(--font-title);
+  font-size: 4.2mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.foot {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 5mm;
+  margin-top: 3.5mm;
+  height: 22mm;
+}
+.foot .changed {
+  display: flex;
+  align-items: center;
+  gap: 2.5mm;
+  font-size: 4.4mm;
+}
+.foot .changed .blank { width: 52mm; height: 11mm; min-height: 0; }
+.foot .spacer { flex: 1; }
+.foot .witty { font-size: 6.4mm; padding-bottom: 1mm; }
+.foot .mascot { height: 22mm; }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="head">
+    <img class="mascot" src="assets/svg/quokka-scarf.svg" alt="">
+    <div>
+      <h1>1학년 3반 자리 배치표</h1>
+      <div class="sub">가을에는 창가 자리가 제일 인기</div>
+    </div>
+    <div class="spacer"></div>
+    <img class="mascot" src="assets/svg/leaf-maple.svg" alt="" style="height:18mm">
+    <img class="mascot" src="assets/svg/acorn.svg" alt="" style="height:15mm">
+  </div>
+
+  <div class="band">칠 판 · 교 탁</div>
+
+  <div class="room">
+    <div class="side">창문</div>
+    <div class="seats">
+      <div class="desk"><div class="seat"><span class="no">1</span></div><div class="seat"><span class="no">2</span></div></div>
+      <div class="desk"><div class="seat"><span class="no">3</span></div><div class="seat"><span class="no">4</span></div></div>
+      <div class="desk"><div class="seat"><span class="no">5</span></div><div class="seat"><span class="no">6</span></div></div>
+      <div class="desk"><div class="seat"><span class="no">7</span></div><div class="seat"><span class="no">8</span></div></div>
+      <div class="desk"><div class="seat"><span class="no">9</span></div><div class="seat"><span class="no">10</span></div></div>
+      <div class="desk"><div class="seat"><span class="no">11</span></div><div class="seat"><span class="no">12</span></div></div>
+      <div class="desk"><div class="seat"><span class="no">13</span></div><div class="seat"><span class="no">14</span></div></div>
+      <div class="desk"><div class="seat"><span class="no">15</span></div><div class="seat"><span class="no">16</span></div></div>
+    </div>
+    <div class="side">복도</div>
+  </div>
+
+  <div class="foot">
+    <div class="changed">
+      <span>자리 바꾼 날</span>
+      <div class="blank"></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="witty">짝 바뀌어도 잘 지내기</div>
+    <img class="mascot" src="assets/svg/quokka-happy.svg" alt="">
+  </div>
+
+</div>
+</body>
+</html>

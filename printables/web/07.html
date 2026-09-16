@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 종이 폭(px)을 뷰포트 폭으로 선언한다. 그러면 폰이 알아서 화면 폭에 맞춰 줄이고,
+     손가락으로 벌리면 커진다. JS 로 재서 scale 을 거는 방법도 되지만, 재는 시점과
+     글꼴 도착 시점이 어긋나면 조용히 잘린 채로 나온다. 선언이 더 안전하다. -->
+<!-- minimum-scale 을 낮춰 둔다. 기본값 0.25 면 레이아웃 폭이 화면의 4배로
+     제한돼서, A2(1587px)가 390px 폰에서 1560px 로 잘린다. -->
+<meta name="viewport" content="width=794, minimum-scale=0.1">
+<title>1인 1역 · 당번표 · 1학년 3반</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/print.css">
+<style>
+
+/* A4 세로 — 210 x 297 mm */
+
+.sheet { width: 210mm; height: 297mm; }
+
+.head { gap: 3mm; }
+.head h1 { font-size: 9mm; }
+.head .sub { font-size: 4mm; margin-top: 1mm; }
+.head .mascot { height: 24mm; }
+
+.week { flex: none; display: flex; align-items: center; gap: 2.5mm;
+        margin-top: 3mm; font-size: 4.4mm; }
+.week .blank { flex: 1; height: 11mm; min-height: 0; }
+
+ul { flex: 1; list-style: none; margin: 4mm 0 0; padding: 0;
+     display: flex; flex-direction: column; gap: 3mm; }
+li { flex: 1; display: flex; align-items: center; gap: 3mm; }
+li img { flex: none; height: 12mm; }
+li .t { flex: none; width: 46mm; font-family: var(--font-title); font-size: 5.4mm;
+        line-height: 1.2; }
+li .blank { flex: 1; height: 100%; min-height: 0; }
+
+.foot { flex: none; display: flex; align-items: center; gap: 3mm; margin-top: 4mm; }
+.foot .witty { font-size: 5.8mm; }
+.foot .spacer { flex: 1; }
+.foot img { height: 24mm; }
+
+</style>
+<style>
+/* ───── 폰 껍데기 ─────
+   위 뷰포트 선언 때문에 이 페이지는 항상 794 폭으로 조판된 뒤 화면 크기로 줄어든다.
+   그래서 껍데기 치수도 794 에 비례해 잡아야 종이와 같은 비율로 줄어든다.
+   고정 px 로 잡으면 A2(1587px)에서는 깨알같이, A4(794px)에서는 큼직하게 나온다. */
+@media screen {
+  html, body { padding: 0; margin: 0; background: #4A3223; display: block;
+               width: 794px; }
+}
+#top {
+  display: flex; align-items: center; gap: 14.4px;
+  padding: 16.5px 18.9px; background: #4A3223; color: #FDF6E9;
+  font-family: var(--font-body); font-size: 23.4px;
+}
+#top a { color: #FDF6E9; text-decoration: none; opacity: .75; font-size: 30.5px;
+         line-height: 1; }
+#top b { font-family: var(--font-title); font-weight: 400; font-size: 30.5px; }
+#top i { font-style: normal; opacity: .5; font-size: 23.4px; margin-left: auto; }
+/* 종이 폭이 곧 뷰포트 폭이다. 좌우 여백을 주면 딱 그만큼 가로로 넘친다. */
+#wrap { padding: 0; }
+.sheet { box-shadow: 0 3px 16px rgba(0,0,0,.4); }
+#hint { color: #FDF6E9; opacity: .5; font-family: var(--font-body);
+        font-size: 23.4px; text-align: center; padding: 18.9px 0 39.7px; }
+</style>
+</head>
+<body>
+<div id="top"><a href="index.html">&#8592;</a><b>1인 1역 · 당번표</b><i>A4 세로</i></div>
+<div id="wrap"><div class="sheet">
+  <div class="head">
+    <img class="mascot" src="assets/svg/quokka-earmuffs.svg" alt="">
+    <div>
+      <h1>1인 1역 · 당번표</h1>
+      <div class="sub">1학년 3반 · 두 명씩 맡습니다</div>
+    </div>
+    <div class="spacer"></div>
+    <img class="mascot" src="assets/svg/acorn.svg" alt="" style="height:15mm">
+  </div>
+
+  <div class="week">
+    <span>이번 주</span>
+    <div class="blank"></div>
+  </div>
+
+  <ul>
+    <li><img src="assets/svg/leaf-maple.svg" alt=""><span class="t">칠판 · 분필</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/persimmon.svg" alt=""><span class="t">전등 · 에어컨</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/leaf-ginkgo.svg" alt=""><span class="t">분리수거</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/acorn.svg" alt=""><span class="t">창문 · 환기</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/chestnut.svg" alt=""><span class="t">실습실 정리 · 전원</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/leaf-maple.svg" alt=""><span class="t">게시판</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/persimmon.svg" alt=""><span class="t">수업 준비물</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/acorn.svg" alt=""><span class="t">인사 · 알림</span><div class="blank"></div><div class="blank"></div></li>
+  </ul>
+
+  <div class="foot">
+    <span class="witty">내 역할은 내가 챙기기</span>
+    <span class="spacer"></span>
+    <img src="assets/svg/quokka-surprised.svg" alt="">
+  </div>
+</div></div>
+<div id="hint">두 손가락으로 벌리면 커집니다</div>
+</body>
+</html>

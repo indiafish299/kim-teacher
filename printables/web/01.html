@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 종이 폭(px)을 뷰포트 폭으로 선언한다. 그러면 폰이 알아서 화면 폭에 맞춰 줄이고,
+     손가락으로 벌리면 커진다. JS 로 재서 scale 을 거는 방법도 되지만, 재는 시점과
+     글꼴 도착 시점이 어긋나면 조용히 잘린 채로 나온다. 선언이 더 안전하다. -->
+<!-- minimum-scale 을 낮춰 둔다. 기본값 0.25 면 레이아웃 폭이 화면의 4배로
+     제한돼서, A2(1587px)가 390px 폰에서 1560px 로 잘린다. -->
+<meta name="viewport" content="width=1587, minimum-scale=0.1">
+<title>주간 시간표 · 1학년 3반</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/print.css">
+<style>
+
+/* A2 세로 — 420 x 594 mm */
+
+.sheet { width: 420mm; height: 594mm; padding: 12mm; }
+
+/* --- 머리 --- */
+.head { gap: 6mm; }
+.head h1 { font-size: 20mm; }
+.head .sub { font-size: 8mm; margin-top: 1.5mm; }
+.head .mascot { height: 46mm; }
+.head .leaf { height: 26mm; }
+.homeroom {
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+  font-size: 7mm;
+  margin-top: 2mm;
+}
+.homeroom b { font-family: var(--font-title); font-weight: 400; }
+
+/* --- 시간표 그리드 ---
+   교시열 + 월~금 5칸 / 요일 머리줄 + 1~7교시 */
+.grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 30mm repeat(5, 1fr);
+  grid-template-rows: 20mm repeat(7, 1fr);
+  gap: 2.5mm;
+  margin-top: 6mm;
+}
+.dow, .period {
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-title);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2mm;
+}
+.dow { font-size: 9mm; }
+.period { font-size: 9mm; }
+.corner { background: none; }
+
+/* 과목 칸. 진한 배경 + 흰 글씨 대신 옅은 틴트 + 진한 글씨로 간다.
+   A2 크기에서 잉크를 훨씬 덜 먹고, 교실 뒤에서도 글자가 더 또렷하다. */
+.s {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2mm;
+  font-family: var(--font-title);
+  font-size: 13mm;
+  letter-spacing: -0.02em;
+  border: 0.5mm solid rgba(74, 50, 35, .10);
+}
+.base  { background: var(--tint-ginkgo); }      /* 국어2 · 수학2 · 영어2 */
+.explr { background: var(--tint-moss); }        /* 통사2 · 통과2 */
+.major { background: var(--tint-maple); }       /* 디비C · 객체B */
+.body  { background: var(--tint-persimmon); }   /* 체육2 · 진직 */
+.creat { background: var(--tint-fur); }         /* 자율 · 동아 */
+
+/* 수업이 없는 칸은 쿼카에게 내준다 */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1mm;
+  border: 0.8mm dashed var(--line);
+  border-radius: 2mm;
+}
+.empty img { height: 34mm; }
+.empty span { font-family: var(--font-hand); font-size: 7mm; color: var(--maple); }
+.empty.tall { grid-column: 6; grid-row: 7 / span 2; }
+.empty.tall img { height: 62mm; }
+.empty.tall span { font-size: 9mm; }
+
+/* --- 아래 빈칸 두 개 --- */
+.foot {
+  flex: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6mm;
+  height: 96mm;
+  margin-top: 6mm;
+}
+.box { display: flex; flex-direction: column; }
+.box .label {
+  font-family: var(--font-title);
+  font-size: 8mm;
+  color: var(--ink);
+  padding: 0 0 2mm 2mm;
+}
+.box .blank { flex: 1; border-width: 0.8mm; border-radius: 3mm; }
+
+/* 범례 */
+.legend {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6mm;
+  margin-top: 5mm;
+  font-size: 6mm;
+}
+.legend i {
+  display: inline-block;
+  width: 8mm; height: 5mm;
+  border-radius: 1mm;
+  margin-right: 1.5mm;
+  vertical-align: -0.8mm;
+  border: 0.4mm solid rgba(74, 50, 35, .12);
+}
+.legend .spacer { flex: 1; }
+.legend .witty { font-size: 8mm; }
+
+</style>
+<style>
+/* ───── 폰 껍데기 ─────
+   위 뷰포트 선언 때문에 이 페이지는 항상 1587 폭으로 조판된 뒤 화면 크기로 줄어든다.
+   그래서 껍데기 치수도 1587 에 비례해 잡아야 종이와 같은 비율로 줄어든다.
+   고정 px 로 잡으면 A2(1587px)에서는 깨알같이, A4(794px)에서는 큼직하게 나온다. */
+@media screen {
+  html, body { padding: 0; margin: 0; background: #4A3223; display: block;
+               width: 1587px; }
+}
+#top {
+  display: flex; align-items: center; gap: 28.9px;
+  padding: 33.1px 37.8px; background: #4A3223; color: #FDF6E9;
+  font-family: var(--font-body); font-size: 46.7px;
+}
+#top a { color: #FDF6E9; text-decoration: none; opacity: .75; font-size: 61.0px;
+         line-height: 1; }
+#top b { font-family: var(--font-title); font-weight: 400; font-size: 61.0px; }
+#top i { font-style: normal; opacity: .5; font-size: 46.7px; margin-left: auto; }
+/* 종이 폭이 곧 뷰포트 폭이다. 좌우 여백을 주면 딱 그만큼 가로로 넘친다. */
+#wrap { padding: 0; }
+.sheet { box-shadow: 0 3px 16px rgba(0,0,0,.4); }
+#hint { color: #FDF6E9; opacity: .5; font-family: var(--font-body);
+        font-size: 46.7px; text-align: center; padding: 37.8px 0 79.3px; }
+</style>
+</head>
+<body>
+<div id="top"><a href="index.html">&#8592;</a><b>주간 시간표</b><i>A2 세로</i></div>
+<div id="wrap"><div class="sheet">
+
+  <div class="head">
+    <img class="mascot" src="assets/svg/quokka-scarf.svg" alt="">
+    <div>
+      <h1>1학년 3반 주간 시간표</h1>
+      <div class="sub">월요일은 자율활동으로 가볍게, 금요일은 동아리로 시원하게</div>
+      <div class="homeroom">소프트웨어개발과 &middot; 담임 <b>김종석</b> 선생님</div>
+    </div>
+    <div class="spacer"></div>
+    <img class="leaf" src="assets/svg/leaf-maple.svg" alt="">
+    <img class="leaf" src="assets/svg/persimmon.svg" alt="">
+    <img class="leaf" src="assets/svg/acorn.svg" alt="">
+  </div>
+
+  <div class="grid">
+    <div class="corner"></div>
+    <div class="dow">월</div>
+    <div class="dow">화</div>
+    <div class="dow">수</div>
+    <div class="dow">목</div>
+    <div class="dow">금</div>
+
+    <!-- 금요일 6·7교시는 두 칸을 합쳐 쿼카에게 내준다.
+         나머지 칸은 자동 배치가 이 자리를 피해 흘러간다. -->
+    <div class="empty tall">
+      <img src="assets/svg/quokka-happy.svg" alt="">
+      <span>금요일 끝! 다음 주에 봐요</span>
+    </div>
+
+    <div class="period">1</div>
+    <div class="s creat">자율</div>
+    <div class="s body">체육2</div>
+    <div class="s major">객체B</div>
+    <div class="s base">국어2</div>
+    <div class="s explr">통사2</div>
+
+    <div class="period">2</div>
+    <div class="s base">수학2</div>
+    <div class="s major">디비C</div>
+    <div class="s major">객체B</div>
+    <div class="s base">수학2</div>
+    <div class="s body">체육2</div>
+
+    <div class="period">3</div>
+    <div class="s explr">통사2</div>
+    <div class="s major">디비C</div>
+    <div class="s major">객체B</div>
+    <div class="s major">객체B</div>
+    <div class="s base">국어2</div>
+
+    <div class="period">4</div>
+    <div class="s explr">통과2</div>
+    <div class="s base">국어2</div>
+    <div class="s major">디비C</div>
+    <div class="s major">객체B</div>
+    <div class="s base">수학2</div>
+
+    <div class="period">5</div>
+    <div class="s major">디비C</div>
+    <div class="s base">영어2</div>
+    <div class="s explr">통과2</div>
+    <div class="s major">객체B</div>
+    <div class="s creat">동아</div>
+
+    <div class="period">6</div>
+    <div class="s major">디비C</div>
+    <div class="s body">진직</div>
+    <div class="s base">영어2</div>
+    <div class="s major">객체B</div>
+
+    <div class="period">7</div>
+    <div class="s base">영어2</div>
+    <div class="s explr">통사2</div>
+    <div class="empty">
+      <img src="assets/svg/quokka-surprised.svg" alt="">
+      <span>어? 여긴 비었네</span>
+    </div>
+    <div class="s explr">통과2</div>
+  </div>
+
+  <div class="foot">
+    <div class="box">
+      <div class="label">이번 주 준비물</div>
+      <div class="blank"></div>
+    </div>
+    <div class="box">
+      <div class="label">이번 주 알림</div>
+      <div class="blank"></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><i class="base"></i>국어 · 수학 · 영어</span>
+    <span><i class="explr"></i>통합사회 · 통합과학</span>
+    <span><i class="major"></i>전공</span>
+    <span><i class="body"></i>체육 · 진로</span>
+    <span><i class="creat"></i>창의적 체험활동</span>
+    <span class="spacer"></span>
+    <span class="witty">시간표는 안 바뀌어요, 마음만 바뀌지</span>
+  </div>
+
+</div></div>
+<div id="hint">두 손가락으로 벌리면 커집니다</div>
+</body>
+</html>

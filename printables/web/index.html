@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1학년 3반 학급 칠판 게시물</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<style>
+:root { --cream:#FDF6E9; --ink:#4A3223; --maple:#B33A2B; --line:#DCD0BC; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ink); color: var(--cream);
+       font-family: var(--font-body); word-break: keep-all; }
+header { padding: 22px 18px 16px; }
+header h1 { margin: 0; font-family: var(--font-title); font-weight: 400;
+            font-size: 22px; line-height: 1.3; }
+header p { margin: 7px 0 0; font-family: var(--font-hand); color: #E2762F;
+           font-size: 14px; line-height: 1.45; }
+ul { list-style: none; margin: 0; padding: 0 12px 28px; display: grid;
+     grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (min-width: 620px) { ul { grid-template-columns: repeat(3, 1fr); } }
+a.card { display: block; text-decoration: none; color: var(--ink);
+         background: var(--cream); border-radius: 10px; overflow: hidden; }
+a.card img { display: block; width: 100%; height: auto; background: #fff;
+             border-bottom: 1px solid var(--line); }
+a.card .t { display: block; font-family: var(--font-title); font-size: 14px;
+            padding: 9px 10px 2px; line-height: 1.3; }
+a.card .p { display: block; font-size: 11px; opacity: .55; padding: 0 10px 10px; }
+footer { padding: 0 18px 30px; font-size: 12px; opacity: .45; line-height: 1.6; }
+</style>
+</head>
+<body>
+<header>
+  <h1>1학년 3반 학급 칠판 게시물</h1>
+  <p>눌러서 크게 보세요. 고칠 거 있으면 학급회의 때 말해 주세요</p>
+</header>
+<ul>
+  <li><a class="card" href="01.html"><img src="thumb/01.png" alt="" loading="lazy"><span class="t">주간 시간표</span><span class="p">A2 세로</span></a></li>
+  <li><a class="card" href="02.html"><img src="thumb/02.png" alt="" loading="lazy"><span class="t">출결 특이사항</span><span class="p">A3 세로</span></a></li>
+  <li><a class="card" href="03.html"><img src="thumb/03.png" alt="" loading="lazy"><span class="t">오늘의 알림장</span><span class="p">A3 세로</span></a></li>
+  <li><a class="card" href="04.html"><img src="thumb/04.png" alt="" loading="lazy"><span class="t">우리 반 약속</span><span class="p">A3 세로</span></a></li>
+  <li><a class="card" href="05.html"><img src="thumb/05.png" alt="" loading="lazy"><span class="t">생일 축하 달력</span><span class="p">A3 세로</span></a></li>
+  <li><a class="card" href="06.html"><img src="thumb/06.png" alt="" loading="lazy"><span class="t">자리 배치표</span><span class="p">A4 가로</span></a></li>
+  <li><a class="card" href="07.html"><img src="thumb/07.png" alt="" loading="lazy"><span class="t">1인 1역 · 당번표</span><span class="p">A4 세로</span></a></li>
+</ul>
+<footer>소프트웨어개발과 · 담임 김종석</footer>
+</body>
+</html>

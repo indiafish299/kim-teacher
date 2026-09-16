@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>1학년 3반 1인 1역 · 당번표 (A4 세로)</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/print.css">
+<style>
+/* A4 세로 — 210 x 297 mm */
+@page { size: 210mm 297mm; margin: 0; }
+.sheet { width: 210mm; height: 297mm; }
+
+.head { gap: 3mm; }
+.head h1 { font-size: 9mm; }
+.head .sub { font-size: 4mm; margin-top: 1mm; }
+.head .mascot { height: 24mm; }
+
+.week { flex: none; display: flex; align-items: center; gap: 2.5mm;
+        margin-top: 3mm; font-size: 4.4mm; }
+.week .blank { flex: 1; height: 11mm; min-height: 0; }
+
+ul { flex: 1; list-style: none; margin: 4mm 0 0; padding: 0;
+     display: flex; flex-direction: column; gap: 3mm; }
+li { flex: 1; display: flex; align-items: center; gap: 3mm; }
+li img { flex: none; height: 12mm; }
+li .t { flex: none; width: 46mm; font-family: var(--font-title); font-size: 5.4mm;
+        line-height: 1.2; }
+li .blank { flex: 1; height: 100%; min-height: 0; }
+
+.foot { flex: none; display: flex; align-items: center; gap: 3mm; margin-top: 4mm; }
+.foot .witty { font-size: 5.8mm; }
+.foot .spacer { flex: 1; }
+.foot img { height: 24mm; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="head">
+    <img class="mascot" src="assets/svg/quokka-earmuffs.svg" alt="">
+    <div>
+      <h1>1인 1역 · 당번표</h1>
+      <div class="sub">1학년 3반 · 두 명씩 맡습니다</div>
+    </div>
+    <div class="spacer"></div>
+    <img class="mascot" src="assets/svg/acorn.svg" alt="" style="height:15mm">
+  </div>
+
+  <div class="week">
+    <span>이번 주</span>
+    <div class="blank"></div>
+  </div>
+
+  <ul>
+    <li><img src="assets/svg/leaf-maple.svg" alt=""><span class="t">칠판 · 분필</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/persimmon.svg" alt=""><span class="t">전등 · 에어컨</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/leaf-ginkgo.svg" alt=""><span class="t">분리수거</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/acorn.svg" alt=""><span class="t">창문 · 환기</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/chestnut.svg" alt=""><span class="t">실습실 정리 · 전원</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/leaf-maple.svg" alt=""><span class="t">게시판</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/persimmon.svg" alt=""><span class="t">수업 준비물</span><div class="blank"></div><div class="blank"></div></li>
+    <li><img src="assets/svg/acorn.svg" alt=""><span class="t">인사 · 알림</span><div class="blank"></div><div class="blank"></div></li>
+  </ul>
+
+  <div class="foot">
+    <span class="witty">내 역할은 내가 챙기기</span>
+    <span class="spacer"></span>
+    <img src="assets/svg/quokka-surprised.svg" alt="">
+  </div>
+</div>
+</body>
+</html>
