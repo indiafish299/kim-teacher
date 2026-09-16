@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 종이 폭(px)을 뷰포트 폭으로 선언한다. 그러면 폰이 알아서 화면 폭에 맞춰 줄이고,
+     손가락으로 벌리면 커진다. JS 로 재서 scale 을 거는 방법도 되지만, 재는 시점과
+     글꼴 도착 시점이 어긋나면 조용히 잘린 채로 나온다. 선언이 더 안전하다. -->
+<!-- minimum-scale 을 낮춰 둔다. 기본값 0.25 면 레이아웃 폭이 화면의 4배로
+     제한돼서, A2(1587px)가 390px 폰에서 1560px 로 잘린다. -->
+<meta name="viewport" content="width=1123, minimum-scale=0.1">
+<title>생일 축하 달력 · 1학년 3반</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/print.css">
+<style>
+
+/* A3 세로 — 297 x 420 mm */
+
+.sheet { width: 297mm; height: 420mm; }
+
+.head { gap: 4mm; }
+.head h1 { font-size: 13mm; }
+.head .sub { font-size: 5mm; margin-top: 1mm; }
+.head .mascot { height: 34mm; }
+
+.months { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(4, 1fr); gap: 4mm; margin-top: 5mm; }
+.card { background: var(--paper); border: 0.6mm solid var(--line);
+        border-radius: 3mm; padding: 3mm; display: flex; flex-direction: column; }
+.card .m { flex: none; display: flex; align-items: center; justify-content: space-between;
+           font-family: var(--font-title); font-size: 8mm; color: var(--maple);
+           padding-bottom: 2mm; }
+.card .ic { height: 12mm; }
+.card .ic.big { height: 18mm; margin: -3mm -1mm -1mm 0; }
+.card .names { flex: 1; display: flex; flex-direction: column;
+               justify-content: space-between; gap: 1.5mm; }
+.card .ln { flex: 1; border-bottom: 0.4mm dashed var(--line); }
+
+.foot { flex: none; display: flex; align-items: center; gap: 3mm; margin-top: 4mm; }
+.foot .witty { font-size: 6.5mm; }
+.foot .spacer { flex: 1; }
+.foot img { height: 24mm; }
+
+</style>
+<style>
+/* ───── 폰 껍데기 ─────
+   위 뷰포트 선언 때문에 이 페이지는 항상 1123 폭으로 조판된 뒤 화면 크기로 줄어든다.
+   그래서 껍데기 치수도 1123 에 비례해 잡아야 종이와 같은 비율로 줄어든다.
+   고정 px 로 잡으면 A2(1587px)에서는 깨알같이, A4(794px)에서는 큼직하게 나온다. */
+@media screen {
+  html, body { padding: 0; margin: 0; background: #4A3223; display: block;
+               width: 1123px; }
+}
+#top {
+  display: flex; align-items: center; gap: 20.4px;
+  padding: 23.4px 26.7px; background: #4A3223; color: #FDF6E9;
+  font-family: var(--font-body); font-size: 33.0px;
+}
+#top a { color: #FDF6E9; text-decoration: none; opacity: .75; font-size: 43.2px;
+         line-height: 1; }
+#top b { font-family: var(--font-title); font-weight: 400; font-size: 43.2px; }
+#top i { font-style: normal; opacity: .5; font-size: 33.0px; margin-left: auto; }
+/* 종이 폭이 곧 뷰포트 폭이다. 좌우 여백을 주면 딱 그만큼 가로로 넘친다. */
+#wrap { padding: 0; }
+.sheet { box-shadow: 0 3px 16px rgba(0,0,0,.4); }
+#hint { color: #FDF6E9; opacity: .5; font-family: var(--font-body);
+        font-size: 33.0px; text-align: center; padding: 26.7px 0 56.1px; }
+</style>
+</head>
+<body>
+<div id="top"><a href="index.html">&#8592;</a><b>생일 축하 달력</b><i>A3 세로</i></div>
+<div id="wrap"><div class="sheet">
+  <div class="head">
+    <img class="mascot" src="assets/svg/quokka-happy.svg" alt="">
+    <div>
+      <h1>1학년 3반 생일</h1>
+      <div class="sub">이름은 보드마카로 — 전학 와도 바로 추가</div>
+    </div>
+    <div class="spacer"></div>
+    <img class="mascot" src="assets/svg/leaf-maple.svg" alt="" style="height:20mm">
+  </div>
+
+  <div class="months">
+    <div class="card"><div class="m">1월<img class="ic big" src="assets/svg/quokka-earmuffs.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">2월<img class="ic" src="assets/svg/chestnut.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">3월<img class="ic" src="assets/svg/leaf-ginkgo.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">4월<img class="ic" src="assets/svg/acorn.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">5월<img class="ic" src="assets/svg/persimmon.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">6월<img class="ic" src="assets/svg/leaf-maple.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">7월<img class="ic" src="assets/svg/acorn.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">8월<img class="ic" src="assets/svg/chestnut.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">9월<img class="ic" src="assets/svg/persimmon.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">10월<img class="ic" src="assets/svg/leaf-maple.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">11월<img class="ic" src="assets/svg/acorn.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+    <div class="card"><div class="m">12월<img class="ic big" src="assets/svg/quokka-scarf.svg" alt=""></div><div class="names"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div></div>
+  </div>
+
+  <div class="foot">
+    <span class="witty">생일인 사람은 그날 하루 쿼카 대접</span>
+    <span class="spacer"></span>
+    <img src="assets/svg/quokka-earmuffs.svg" alt="">
+  </div>
+</div></div>
+<div id="hint">두 손가락으로 벌리면 커집니다</div>
+</body>
+</html>

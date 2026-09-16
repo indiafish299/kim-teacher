@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 종이 폭(px)을 뷰포트 폭으로 선언한다. 그러면 폰이 알아서 화면 폭에 맞춰 줄이고,
+     손가락으로 벌리면 커진다. JS 로 재서 scale 을 거는 방법도 되지만, 재는 시점과
+     글꼴 도착 시점이 어긋나면 조용히 잘린 채로 나온다. 선언이 더 안전하다. -->
+<!-- minimum-scale 을 낮춰 둔다. 기본값 0.25 면 레이아웃 폭이 화면의 4배로
+     제한돼서, A2(1587px)가 390px 폰에서 1560px 로 잘린다. -->
+<meta name="viewport" content="width=1123, minimum-scale=0.1">
+<title>오늘의 알림장 · 1학년 3반</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/print.css">
+<style>
+
+
+/* A3 세로 — 297 x 420 mm.
+   가로에서는 알림(2/3)과 급식(1/3)이 나란히 있었다. 세로로 돌리면 둘 다 폭이
+   좁아져 못 쓰므로 위아래로 쌓는다. */
+
+.sheet { width: 297mm; height: 420mm; }
+
+.head { gap: 3mm; }
+.head h1 { font-size: 10mm; }
+.head .sub { font-size: 4.2mm; margin-top: 1mm; }
+.head .mascot { height: 26mm; }
+
+/* 날짜 줄 — 매일 보드마카로 갈아 쓴다 */
+.datebar { flex: none; display: flex; align-items: center; gap: 2.5mm;
+           margin-top: 4mm; }
+.datebar .slot { display: flex; align-items: center; gap: 1.5mm;
+                 font-family: var(--font-title); font-size: 6mm; }
+.datebar .slot .blank { width: 23mm; height: 15mm; min-height: 0; }
+.datebar .spacer { flex: 1; }
+.weather { display: flex; gap: 2mm; }
+.weather .w { width: 17mm; height: 17mm; border-radius: 50%;
+              border: 0.6mm solid var(--line); background: var(--paper);
+              display: flex; align-items: center; justify-content: center;
+              font-size: 3.8mm; }
+
+.block { display: flex; flex-direction: column; margin-top: 5mm; }
+.block .label { flex: none; font-family: var(--font-title); font-size: 6.5mm;
+                padding: 0 0 2mm 1mm; }
+.notice { flex: 3; }
+.notice .lines { flex: 1; display: flex; flex-direction: column; gap: 2.5mm; }
+.notice .line { flex: 1; background: var(--paper);
+                border: 0.5mm solid var(--line); border-radius: 1.5mm; }
+.lunch { flex: 2; }
+.lunch .body { flex: 1; display: flex; gap: 3mm; }
+.lunch .blank { flex: 1; border-width: 0.6mm; }
+.lunch .mascot { flex: none; align-self: flex-end; height: 34mm; }
+
+.tomorrow { flex: none; display: flex; align-items: center; gap: 3mm;
+            margin-top: 5mm; height: 22mm; }
+.tomorrow .label { font-family: var(--font-title); font-size: 5.5mm;
+                   white-space: nowrap; }
+.tomorrow .blank { flex: 1; height: 100%; }
+
+</style>
+<style>
+/* ───── 폰 껍데기 ─────
+   위 뷰포트 선언 때문에 이 페이지는 항상 1123 폭으로 조판된 뒤 화면 크기로 줄어든다.
+   그래서 껍데기 치수도 1123 에 비례해 잡아야 종이와 같은 비율로 줄어든다.
+   고정 px 로 잡으면 A2(1587px)에서는 깨알같이, A4(794px)에서는 큼직하게 나온다. */
+@media screen {
+  html, body { padding: 0; margin: 0; background: #4A3223; display: block;
+               width: 1123px; }
+}
+#top {
+  display: flex; align-items: center; gap: 20.4px;
+  padding: 23.4px 26.7px; background: #4A3223; color: #FDF6E9;
+  font-family: var(--font-body); font-size: 33.0px;
+}
+#top a { color: #FDF6E9; text-decoration: none; opacity: .75; font-size: 43.2px;
+         line-height: 1; }
+#top b { font-family: var(--font-title); font-weight: 400; font-size: 43.2px; }
+#top i { font-style: normal; opacity: .5; font-size: 33.0px; margin-left: auto; }
+/* 종이 폭이 곧 뷰포트 폭이다. 좌우 여백을 주면 딱 그만큼 가로로 넘친다. */
+#wrap { padding: 0; }
+.sheet { box-shadow: 0 3px 16px rgba(0,0,0,.4); }
+#hint { color: #FDF6E9; opacity: .5; font-family: var(--font-body);
+        font-size: 33.0px; text-align: center; padding: 26.7px 0 56.1px; }
+</style>
+</head>
+<body>
+<div id="top"><a href="index.html">&#8592;</a><b>오늘의 알림장</b><i>A3 세로</i></div>
+<div id="wrap"><div class="sheet">
+  <div class="head">
+    <img class="mascot" src="assets/svg/quokka-scarf.svg" alt="">
+    <div>
+      <h1>오늘의 알림장</h1>
+      <div class="sub">1학년 3반 &middot; 매일 아침 새로 씁니다</div>
+    </div>
+    <div class="spacer"></div>
+    <img class="mascot" src="assets/svg/persimmon.svg" alt="" style="height:18mm">
+  </div>
+
+  <div class="datebar">
+    <div class="slot"><div class="blank"></div>월</div>
+    <div class="slot"><div class="blank"></div>일</div>
+    <div class="slot"><div class="blank"></div>요일</div>
+    <div class="spacer"></div>
+    <div class="weather"><div class="w">맑음</div><div class="w">흐림</div><div class="w">비</div><div class="w">바람</div><div class="w">눈</div></div>
+  </div>
+
+  <div class="block notice">
+    <div class="label">오늘의 알림</div>
+    <div class="lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="block lunch">
+    <div class="label">오늘 급식</div>
+    <div class="body">
+      <div class="blank"></div>
+      <img class="mascot" src="assets/svg/quokka-happy.svg" alt="">
+    </div>
+  </div>
+
+  <div class="tomorrow">
+    <div class="label">내일 준비물</div>
+    <div class="blank"></div>
+  </div>
+</div></div>
+<div id="hint">두 손가락으로 벌리면 커집니다</div>
+</body>
+</html>

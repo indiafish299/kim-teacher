@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 종이 폭(px)을 뷰포트 폭으로 선언한다. 그러면 폰이 알아서 화면 폭에 맞춰 줄이고,
+     손가락으로 벌리면 커진다. JS 로 재서 scale 을 거는 방법도 되지만, 재는 시점과
+     글꼴 도착 시점이 어긋나면 조용히 잘린 채로 나온다. 선언이 더 안전하다. -->
+<!-- minimum-scale 을 낮춰 둔다. 기본값 0.25 면 레이아웃 폭이 화면의 4배로
+     제한돼서, A2(1587px)가 390px 폰에서 1560px 로 잘린다. -->
+<meta name="viewport" content="width=1123, minimum-scale=0.1">
+<title>우리 반 약속 · 1학년 3반</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/print.css">
+<style>
+
+/* A3 세로 — 297 x 420 mm */
+
+.sheet { width: 297mm; height: 420mm; }
+
+.head { gap: 4mm; flex-direction: column; align-items: center; text-align: center; }
+.head h1 { font-size: 15mm; }
+.head .sub { font-size: 5.5mm; margin-top: 1.5mm; }
+.head .mascot { height: 40mm; }
+
+ul { flex: 1; list-style: none; margin: 6mm 0 0; padding: 0;
+     display: flex; flex-direction: column; gap: 4mm; }
+li { flex: 1; display: flex; align-items: center; gap: 5mm;
+     background: var(--paper); border: 0.6mm solid var(--line);
+     border-radius: 3mm; padding: 0 5mm; }
+li .n { flex: none; width: 15mm; height: 15mm; border-radius: 50%;
+        background: var(--persimmon); color: #fff;
+        font-family: var(--font-title); font-size: 7.5mm;
+        display: flex; align-items: center; justify-content: center; }
+li .t { flex: 1; font-family: var(--font-title); font-size: 8.5mm;
+        line-height: 1.25; }
+li img { flex: none; height: 17mm; }
+
+.signbox { flex: none; margin-top: 6mm; }
+.signbox .label { font-family: var(--font-title); font-size: 6mm;
+                  padding: 0 0 2mm 1mm; }
+.signbox .hint { font-family: var(--font-hand); font-size: 4.6mm;
+                 color: var(--maple); padding: 0 0 2mm 1mm; }
+.signs { display: grid; grid-template-columns: repeat(8, 1fr);
+         grid-template-rows: repeat(2, 1fr); gap: 2.5mm; height: 34mm; }
+.sign { background: var(--paper); border: 0.5mm solid var(--line);
+        border-radius: 1.5mm; }
+
+</style>
+<style>
+/* ───── 폰 껍데기 ─────
+   위 뷰포트 선언 때문에 이 페이지는 항상 1123 폭으로 조판된 뒤 화면 크기로 줄어든다.
+   그래서 껍데기 치수도 1123 에 비례해 잡아야 종이와 같은 비율로 줄어든다.
+   고정 px 로 잡으면 A2(1587px)에서는 깨알같이, A4(794px)에서는 큼직하게 나온다. */
+@media screen {
+  html, body { padding: 0; margin: 0; background: #4A3223; display: block;
+               width: 1123px; }
+}
+#top {
+  display: flex; align-items: center; gap: 20.4px;
+  padding: 23.4px 26.7px; background: #4A3223; color: #FDF6E9;
+  font-family: var(--font-body); font-size: 33.0px;
+}
+#top a { color: #FDF6E9; text-decoration: none; opacity: .75; font-size: 43.2px;
+         line-height: 1; }
+#top b { font-family: var(--font-title); font-weight: 400; font-size: 43.2px; }
+#top i { font-style: normal; opacity: .5; font-size: 33.0px; margin-left: auto; }
+/* 종이 폭이 곧 뷰포트 폭이다. 좌우 여백을 주면 딱 그만큼 가로로 넘친다. */
+#wrap { padding: 0; }
+.sheet { box-shadow: 0 3px 16px rgba(0,0,0,.4); }
+#hint { color: #FDF6E9; opacity: .5; font-family: var(--font-body);
+        font-size: 33.0px; text-align: center; padding: 26.7px 0 56.1px; }
+</style>
+</head>
+<body>
+<div id="top"><a href="index.html">&#8592;</a><b>우리 반 약속</b><i>A3 세로</i></div>
+<div id="wrap"><div class="sheet">
+  <div class="head">
+    <img class="mascot" src="assets/svg/quokka-scarf.svg" alt="">
+    <div>
+      <h1>우리 반 약속</h1>
+      <div class="sub">1학년 3반이 같이 정했습니다</div>
+    </div>
+  </div>
+
+  <ul>
+    <li><span class="n">1</span><span class="t">종이 치면 자리에 앉아 있기</span><img src="assets/svg/acorn.svg" alt=""></li>
+    <li><span class="n">2</span><span class="t">빌린 건 그날 안에 돌려주기</span><img src="assets/svg/chestnut.svg" alt=""></li>
+    <li><span class="n">3</span><span class="t">별명은 본인이 허락한 것만</span><img src="assets/svg/leaf-maple.svg" alt=""></li>
+    <li><span class="n">4</span><span class="t">실습실 전원은 마지막 사람이</span><img src="assets/svg/persimmon.svg" alt=""></li>
+    <li><span class="n">5</span><span class="t">쓰레기는 내 자리부터</span><img src="assets/svg/leaf-ginkgo.svg" alt=""></li>
+    <li><span class="n">6</span><span class="t">모르면 물어보기 — 쿼카도 물어봐요</span><img src="assets/svg/acorn.svg" alt=""></li>
+  </ul>
+
+  <div class="signbox">
+    <div class="label">우리가 약속합니다</div>
+    <div class="hint">코팅하기 전에 한 사람씩 서명하세요</div>
+    <div class="signs">
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+      <div class="sign"></div>
+    </div>
+  </div>
+</div></div>
+<div id="hint">두 손가락으로 벌리면 커집니다</div>
+</body>
+</html>

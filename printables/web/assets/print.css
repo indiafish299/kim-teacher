@@ -1,0 +1,143 @@
+/* 학급 칠판 게시물 공통 스타일 — 쿼카 · 가을 컨셉
+ *
+ * 각 HTML 이 자기 용지 규격을 @page 와 .sheet 에 mm 실수치로 선언한다.
+ * 여기서는 팔레트와 공통 부품(머리띠, 보드마카 칸, 위트 문구)만 정의한다.
+ */
+
+:root {
+  /* 가을 팔레트 */
+  --cream: #FDF6E9;      /* 종이 바탕 */
+  --paper: #FFFFFF;      /* 보드마카로 쓰는 칸은 반드시 순백 */
+  --ink: #4A3223;        /* 본문 글자, 쿼카의 진한 부분 */
+  --maple: #B33A2B;      /* 단풍 버건디 — 전공과목, 강조 */
+  --persimmon: #E2762F;  /* 감 오렌지 — 머리띠, 쿼카 목도리 */
+  --ginkgo: #E5B23C;     /* 은행 머스터드 — 기초과목 */
+  --moss: #7A8B5A;       /* 이끼 그린 — 탐구과목 */
+  --fur: #D9A273;        /* 쿼카 털색 — 창의적 체험활동 */
+  --line: #E3D5BC;       /* 표 괘선 */
+
+  /* 과목 칸은 진한 색 바탕에 흰 글씨 대신 '옅은 틴트 + 진한 글씨'로 간다.
+     A2 대형 출력에서 잉크를 훨씬 덜 먹고, 멀리서도 글자가 더 또렷하다. */
+  --tint-maple: #F6E2DE;
+  --tint-persimmon: #FBEADC;
+  --tint-ginkgo: #FBF0D8;
+  --tint-moss: #EDF0E5;
+  --tint-fur: #F7EADC;
+
+  --font-title: "Jua", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-body: "Gowun Dodum", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-hand: "Gaegu", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-body);
+  /* 한글은 기본 규칙상 글자 단위로 줄이 바뀐다. 그대로 두면 "다음 주 / 에 봐요" 처럼
+     낱말이 잘려 인쇄물에서 눈에 거슬린다. 낱말 단위로 끊게 한다. */
+  word-break: keep-all;
+  /* 배경색을 인쇄에 포함시킨다. 크롬은 인쇄 대화상자의 '배경 그래픽' 체크박스가
+     최종 결정권을 갖기 때문에, README 의 안내는 이것과 별개로 필요하다. */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* 한 장의 종이. 각 HTML 이 width/height 를 mm 로 덮어쓴다.
+   overflow:hidden 은 내용이 조금 넘쳐도 2페이지로 쪼개지지 않게 막는 안전장치다. */
+.sheet {
+  position: relative;
+  overflow: hidden;
+  background: var(--cream);
+  padding: 10mm;              /* 프린터가 물리적으로 못 찍는 가장자리를 피하는 안전영역 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- 공통 부품 ----------------------------------------------------------- */
+
+/* 맨 위 제목줄 */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  flex: none;
+}
+.head h1 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+.head .sub {
+  font-family: var(--font-hand);
+  color: var(--maple);
+  line-height: 1.1;
+}
+.head .mascot { flex: none; }
+.head .spacer { flex: 1; }
+
+/* 진한 띠 — 자리배치표의 '칠판·교탁' 같은 것 */
+.band {
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-title);
+  text-align: center;
+  border-radius: 2mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em;        /* 자간 때문에 생기는 오른쪽 쏠림 보정 */
+  flex: none;
+}
+
+/* 보드마카로 쓰고 지우는 칸. 코팅 후 필기하므로 반드시 순백 바탕. */
+.blank {
+  background: var(--paper);
+  border: 0.5mm solid var(--line);
+  border-radius: 1.5mm;
+  min-height: 12mm;
+}
+
+/* 옆으로 세워 붙이는 라벨 (창문 / 복도) */
+.side {
+  writing-mode: vertical-rl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  color: var(--ink);
+  opacity: 0.55;
+  font-family: var(--font-title);
+  flex: none;
+}
+
+/* 아래쪽 위트 한마디 */
+.witty {
+  font-family: var(--font-hand);
+  color: var(--maple);
+  line-height: 1.15;
+}
+
+/* --- 화면 미리보기 / 인쇄 ------------------------------------------------ */
+
+@media screen {
+  body {
+    padding: 24px;
+    background: #6B6156;      /* 종이 경계가 보이도록 어두운 바탕 */
+    display: flex;
+    justify-content: center;
+  }
+  .sheet { box-shadow: 0 6px 32px rgba(0, 0, 0, .35); }
+}
+
+@media print {
+  body { padding: 0; background: var(--cream); display: block; }
+  .sheet { box-shadow: none; }
+}

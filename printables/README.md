@@ -29,7 +29,7 @@
 | 파일 | 게시물 | 용지 | 인쇄되는 것 / 손으로 쓰는 것 |
 |---|---|---|---|
 | `01-timetable-a2.html` | 주간 시간표 | **A2 세로** 420×594 | 과목은 인쇄 · 준비물, 알림은 빈칸 |
-| `02-attendance-a3.html` | 출결 특이사항 | **A3 세로** 297×420 | **하루치 한 장** · 번호·이름만 인쇄 · 날짜, 동그라미, 사유는 손으로 |
+| `02-attendance-a3.html` | 출결 특이사항 | **A3 세로** 297×420 | **하루치 한 장** · 번호만 인쇄 · 이름은 아래 참고 · 날짜와 동그라미는 손으로 |
 | `03-notice-a3.html` | 오늘의 알림장·급식 | **A3 세로** 297×420 | 틀만 인쇄 · 매일 갈아 씁니다 |
 | `04-class-rules-a3.html` | 우리 반 약속 | **A3 세로** 297×420 | 전부 인쇄 · 서명란만 빈칸 |
 | `05-birthday-a3.html` | 생일 축하 달력 | **A3 세로** 297×420 | 달만 인쇄 · 이름은 빈칸 |
@@ -77,6 +77,33 @@
 
 ---
 
+## 학생 이름은 저장소에 없습니다
+
+**이 저장소는 GitHub 에 공개(public)돼 있습니다.** 그래서 출결표에 이름을 박아 두면
+누구나 학급 명단을 볼 수 있고, `web/` 을 통해 인터넷에 올라가면 검색에도 걸립니다.
+그래서 **커밋되는 `02-attendance-a3.html` 은 번호만 있고 이름 칸은 비어 있습니다.**
+
+이름은 `printables/roster.local.json` 에 있습니다. 이 파일은 `.gitignore` 에 들어 있어
+**선생님 컴퓨터에만 남습니다.**
+
+```
+python3 printables/tools/apply_roster.py           # 이름 채우기 — 인쇄 전
+python3 printables/tools/apply_roster.py --clear   # 다시 비우기 — 커밋 전
+```
+
+이름이 들어간 출결표를 인쇄하시려면 **채우고 → 인쇄하고 → 비우는** 순서로 쓰세요.
+번들(`학급칠판게시물.html`)이나 단톡용 사진에도 이름을 넣으시려면 채운 상태에서
+`build_bundle.py` 나 `build_share.py` 를 돌리시면 됩니다. **다만 그렇게 만든 번들은
+커밋하지 마세요** — 이름이 그대로 들어갑니다.
+
+`build_web.py` 는 예외입니다. 이름이 채워진 상태에서 돌려도 **웹 폴더에는 이름을 넣지
+않고**, 결과물에 이름이 하나라도 남아 있으면 아예 실패합니다.
+
+이미 푸시된 과거 커밋에는 이름이 남아 있습니다. 히스토리에서까지 지우려면 별도
+작업이 필요합니다.
+
+---
+
 ## 고쳐 쓰기
 
 HTML 이라 메모장으로 열어 글자만 바꾸면 됩니다. 자주 고칠 만한 곳:
@@ -110,13 +137,17 @@ printables/
 │   ├── fonts.css         글꼴 선언
 │   ├── fonts/            Jua · Gaegu · Gowun Dodum (woff2, OFL)
 │   └── svg/              쿼카 4종 + 가을 소품 5종
+├── web/                  폰용 웹사이트 — Cloudflare Pages 가 이걸 서빙합니다
 ├── share/                단톡에 올릴 사진·PDF — 저장소에 안 올라갑니다
+├── roster.local.json     학생 명단 — 저장소에 안 올라갑니다
 └── tools/
     ├── _chrome.py        도구들이 같이 쓰는 크롬 실행부
     ├── trace_quokka.py   원본 쿼카 그림 → SVG 벡터 추적
     ├── build_props.py    가을 소품(단풍잎·은행잎·도토리·밤·감) 생성
     ├── build_bundle.py   낱장 7종 → 학급칠판게시물.html
     ├── build_share.py    단톡용 사진 7장 + PDF + 문안
+    ├── build_web.py      폰용 웹사이트 → web/
+    ├── apply_roster.py   출결표 이름 채우기 / 비우기
     ├── check_overflow.py 종이 밖으로 넘치는지 검사
     └── check_bundle.py   번들이 낱장과 같은지 대조
 ```
@@ -145,6 +176,48 @@ python3 printables/tools/build_share.py
 사진과 PDF 를 같이 주는 이유가 있습니다. **사진은 안 눌러도 보이지만 확대가 불편하고,
 PDF 는 확대가 편하지만 한 번 눌러야 열립니다.** 단톡에서 링크나 첨부를 누르는 학생은
 절반도 안 되니, 눌러야만 보이는 것 하나만 올리면 대부분 못 보고 지나갑니다.
+
+## 링크로 보여 줄 때 — Cloudflare Pages
+
+사진 대신 **주소 하나**로 보여 주고 싶을 때 씁니다. 학생이 링크를 누르면 목록이 뜨고,
+게시물을 고르면 폰 화면에 맞게 줄어서 나옵니다. 손가락으로 벌리면 커집니다.
+
+```
+python3 printables/tools/build_web.py
+```
+
+`printables/web/` 에 정적 사이트가 만들어집니다. **이 폴더는 커밋합니다** — Cloudflare 가
+빌드 없이 그대로 서빙하기 때문에 파일이 저장소에 있어야 합니다.
+
+### 처음 한 번, 대시보드에서 연결
+
+[dash.cloudflare.com](https://dash.cloudflare.com) 에서 이렇게 하세요. 3분이면 됩니다.
+
+| 항목 | 값 |
+|---|---|
+| 메뉴 | Workers & Pages → Create → Pages → **Connect to Git** |
+| 저장소 | `indiafish299/kim-teacher` |
+| Production branch | `main` |
+| Framework preset | **None** |
+| Build command | **비웁니다** |
+| Build output directory | **`printables/web`** |
+
+저장하면 `<프로젝트이름>.pages.dev` 주소가 나옵니다. 그 주소를 단톡에 올리시면 됩니다.
+이후에는 **push 할 때마다 자동으로 다시 배포**됩니다.
+
+`main` 을 프로덕션 브랜치로 쓰려면 작업 브랜치를 먼저 머지해야 합니다. 머지 전에 미리
+보시려면 Production branch 에 현재 작업 브랜치 이름을 넣으셔도 됩니다.
+
+### 알아 둘 것
+
+- **이름은 안 올라갑니다.** `build_web.py` 는 출결표 이름 칸을 비우고, 결과에 이름이
+  남아 있으면 실패합니다
+- `_headers` 와 `robots.txt` 로 **검색 엔진 색인을 막아** 뒀습니다. 이름을 뺐어도
+  시간표와 자리 배치가 검색에 잡힐 이유는 없습니다
+- 주소를 아는 사람은 누구나 볼 수 있습니다. 반 밖으로 나가면 곤란한 내용을 넣으실
+  거면 Cloudflare Access 로 잠그는 방법이 따로 있습니다
+- 인쇄물을 고치신 뒤에는 `build_web.py` 를 다시 돌리고 커밋·푸시하셔야 웹에 반영됩니다
+
 
 `학급칠판게시물.html` 은 학생들에게 보내지 마세요. 왼쪽 목록이 210px 로 고정돼 있어
 폰에서는 종이가 들어갈 자리가 안 나옵니다. 그 파일은 선생님 컴퓨터 작업용입니다.
