@@ -15,15 +15,12 @@
 from __future__ import annotations
 
 import re
-import shutil
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
+from _chrome import PX_PER_MM, launch
+
 HERE = Path(__file__).resolve().parent.parent
-CHROME = "/opt/pw-browsers/chromium"
-PX_PER_MM = 96 / 25.4
 
 PROBE = """
 <script>
@@ -46,26 +43,19 @@ def probe(html: Path) -> tuple[float, float]:
     tmp = html.with_name("_probe-" + html.name)
     tmp.write_text(html.read_text(encoding="utf-8").replace("</body>", PROBE),
                    encoding="utf-8")
-    # 크롬에 프로필 폴더를 안 주면 기본 프로필을 쓰는데, 앞 번 실행이 남긴 잠금 때문에
-    # 두 번째 장부터 창이 아예 안 뜬다. 7장을 잇달아 재는 도구라 매번 새 프로필을 준다.
-    prof = tempfile.mkdtemp(prefix="chrome-probe-")
     try:
-        out = subprocess.run(
-            [CHROME, "--headless", "--disable-gpu", "--no-sandbox",
-             "--user-data-dir=" + prof,
-             # 가장 큰 종이(A2, 1587x2245px)보다 넉넉한 창. 기본 800x600 으로 재면
-             # 화면용 가운데 정렬·여백이 끼어들어 측정값이 흔들린다.
-             "--window-size=1700,2400",
-             "--disable-background-networking", "--no-first-run",
+        out = launch(
+            # 가장 큰 종이(A2, 1587x2245px)보다 넉넉한 창. 기본 800x600 으로 재면
+            # 화면용 가운데 정렬·여백이 끼어들어 측정값이 흔들린다.
+            ["--window-size=1700,2400",
              "--virtual-time-budget=8000", "--dump-dom", tmp.as_uri()],
-            capture_output=True, text=True, timeout=120).stdout
+            timeout=120)
         m = re.search(r"PROBE (-?\d+) (-?\d+)", out)
         if not m:
             raise RuntimeError(f"{html.name}: 측정값을 못 읽었다")
         return int(m.group(1)) / PX_PER_MM, int(m.group(2)) / PX_PER_MM
     finally:
         tmp.unlink(missing_ok=True)
-        shutil.rmtree(prof, ignore_errors=True)
 
 
 def main() -> int:

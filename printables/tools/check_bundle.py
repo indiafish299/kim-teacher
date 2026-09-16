@@ -16,8 +16,6 @@
 from __future__ import annotations
 
 import re
-import shutil
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -25,30 +23,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from _chrome import BARE, PAPERS, PX_PER_MM, launch
+
 HERE = Path(__file__).resolve().parent.parent
-CHROME = "/opt/pw-browsers/chromium"
-TMP = Path("/tmp/claude-0/-home-user-kim-teacher/"
-           "d6e42e9e-2e50-53c0-9062-cd73a35af685/scratchpad/bundlecheck")
-PX = 96 / 25.4
-
-# (낱장 파일, 번들 안의 id, 가로mm, 세로mm)
-SHEETS = [
-    ("01-timetable-a2.html", "s01", 420, 594),
-    ("02-attendance-a3.html", "s02", 297, 420),
-    ("03-notice-a3.html", "s03", 297, 420),
-    ("04-class-rules-a3.html", "s04", 297, 420),
-    ("05-birthday-a3.html", "s05", 297, 420),
-    ("06-seating-a4.html", "s06", 297, 210),
-    ("07-duty-a4.html", "s07", 210, 297),
-]
-
-# 낱장 파일의 화면용 장식(회색 바탕·가운데 정렬·그림자)을 걷어낸다.
-# 번들 쪽과 같은 조건으로 맞춰야 픽셀 비교가 의미를 갖는다.
-BARE = """<style>
-@media screen { html,body { padding:0!important; margin:0!important;
-  background:#fff!important; display:block!important; }
-  .sheet { box-shadow:none!important; } }
-</style></body>"""
+# 중간 산출물(PDF·PNG)을 두는 곳. 임시 폴더라 지워져도 상관없다.
+TMP = Path(tempfile.gettempdir()) / "printables-bundlecheck"
 
 # 번들에서 셸을 감추고 배율을 1 로 돌려 해당 장만 남긴다
 def bundle_probe(sid: str, size_css: str) -> str:
@@ -75,24 +54,6 @@ addEventListener('load', function () { setTimeout(function () {
 </script></body>""" % (sid, sid, sid, size_css)
 
 
-def run(args: list[str]) -> None:
-    """크롬을 한 번 띄운다.
-
-    프로필 폴더를 매번 새로 준다. 안 주면 기본 프로필을 공유하는데, 앞 번 실행이
-    남긴 잠금 때문에 두 번째 호출부터 창이 안 뜨고 빈 PDF/PNG 가 나온다.
-    이 도구는 장마다 크롬을 네 번 띄우므로 반드시 갈라 놔야 한다.
-    """
-    prof = tempfile.mkdtemp(prefix="chrome-chk-")
-    try:
-        subprocess.run([CHROME, "--headless", "--disable-gpu", "--no-sandbox",
-                        "--user-data-dir=" + prof,
-                        "--hide-scrollbars", "--disable-background-networking",
-                        "--no-first-run"] + args,
-                       capture_output=True, timeout=180)
-    finally:
-        shutil.rmtree(prof, ignore_errors=True)
-
-
 def pdf_size(path: Path) -> tuple[int, float, float]:
     d = path.read_bytes()
     pages = len(re.findall(rb"/Type\s*/Page[^s]", d))
@@ -111,9 +72,9 @@ def main() -> int:
 
     bad = False
     print("%-22s %-22s %-22s %s" % ("장", "낱장 PDF", "번들 PDF", "픽셀 평균차"))
-    for fname, sid, wmm, hmm in SHEETS:
+    for fname, sid, wmm, hmm in PAPERS:
         size_css = "%dmm %dmm" % (wmm, hmm)
-        wpx, hpx = round(wmm * PX), round(hmm * PX)
+        wpx, hpx = round(wmm * PX_PER_MM), round(hmm * PX_PER_MM)
 
         # --- 낱장: 화면 장식 걷어낸 사본
         solo = HERE / ("_chk-" + fname)
@@ -124,14 +85,14 @@ def main() -> int:
         bund.write_text(bhtml.replace("</body>", bundle_probe(sid, size_css)),
                         encoding="utf-8")
         try:
-            run(["--virtual-time-budget=9000", "--no-pdf-header-footer",
+            launch(["--virtual-time-budget=9000", "--no-pdf-header-footer",
                  "--print-to-pdf=%s" % (TMP / ("solo-%s.pdf" % sid)), solo.as_uri()])
-            run(["--virtual-time-budget=9000", "--no-pdf-header-footer",
+            launch(["--virtual-time-budget=9000", "--no-pdf-header-footer",
                  "--print-to-pdf=%s" % (TMP / ("bund-%s.pdf" % sid)), bund.as_uri()])
-            run(["--virtual-time-budget=9000", "--force-device-scale-factor=1",
+            launch(["--virtual-time-budget=9000", "--force-device-scale-factor=1",
                  "--window-size=%d,%d" % (wpx, hpx),
                  "--screenshot=%s" % (TMP / ("solo-%s.png" % sid)), solo.as_uri()])
-            run(["--virtual-time-budget=9000", "--force-device-scale-factor=1",
+            launch(["--virtual-time-budget=9000", "--force-device-scale-factor=1",
                  "--window-size=%d,%d" % (wpx, hpx),
                  "--screenshot=%s" % (TMP / ("bund-%s.png" % sid)), bund.as_uri()])
         finally:

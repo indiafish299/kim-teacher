@@ -43,3 +43,6 @@ next-env.d.ts
 # python 캐시 (printables/tools)
 __pycache__/
 *.pyc
+
+# 단톡 공유용 산출물 (build_share.py 로 언제든 다시 만든다)
+printables/share/

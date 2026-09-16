@@ -110,18 +110,46 @@ printables/
 │   ├── fonts.css         글꼴 선언
 │   ├── fonts/            Jua · Gaegu · Gowun Dodum (woff2, OFL)
 │   └── svg/              쿼카 4종 + 가을 소품 5종
+├── share/                단톡에 올릴 사진·PDF — 저장소에 안 올라갑니다
 └── tools/
+    ├── _chrome.py        도구들이 같이 쓰는 크롬 실행부
     ├── trace_quokka.py   원본 쿼카 그림 → SVG 벡터 추적
     ├── build_props.py    가을 소품(단풍잎·은행잎·도토리·밤·감) 생성
-    └── check_overflow.py 종이 밖으로 넘치는지 검사
+    ├── build_bundle.py   낱장 7종 → 학급칠판게시물.html
+    ├── build_share.py    단톡용 사진 7장 + PDF + 문안
+    ├── check_overflow.py 종이 밖으로 넘치는지 검사
+    └── check_bundle.py   번들이 낱장과 같은지 대조
 ```
 
-`tools/` 는 자산을 다시 만들 때만 씁니다. 인쇄만 할 거면 볼 일 없습니다.
+`tools/` 는 자산이나 공유 파일을 다시 만들 때만 씁니다. 인쇄만 할 거면 볼 일 없습니다.
 
 ```
 python3 printables/tools/trace_quokka.py    # 쿼카 SVG 다시 만들기 (원본 그림 필요)
 python3 printables/tools/build_props.py     # 가을 소품 SVG 다시 만들기
 ```
+
+## 학생들에게 보여 줄 때
+
+```
+python3 printables/tools/build_share.py
+```
+
+`printables/share/` 에 이것들이 생깁니다.
+
+| 파일 | 쓰임 |
+|---|---|
+| `1-시간표.png` ~ `7-당번표.png` | **단톡에 올리면 안 눌러도 바로 펼쳐집니다.** 번호 순서대로 고르면 순서가 맞습니다 |
+| `1학년3반-게시물.pdf` | 7쪽. 벡터라 확대해도 안 깨집니다. 자세히 볼 사람용 |
+| `카톡문안.txt` | 보낼 말과 투표 문항 두 개 |
+
+사진과 PDF 를 같이 주는 이유가 있습니다. **사진은 안 눌러도 보이지만 확대가 불편하고,
+PDF 는 확대가 편하지만 한 번 눌러야 열립니다.** 단톡에서 링크나 첨부를 누르는 학생은
+절반도 안 되니, 눌러야만 보이는 것 하나만 올리면 대부분 못 보고 지나갑니다.
+
+`학급칠판게시물.html` 은 학생들에게 보내지 마세요. 왼쪽 목록이 210px 로 고정돼 있어
+폰에서는 종이가 들어갈 자리가 안 나옵니다. 그 파일은 선생님 컴퓨터 작업용입니다.
+
+`share/` 는 커밋되지 않습니다. 인쇄물을 고친 뒤 이 명령을 다시 돌리면 새로 만들어집니다.
 
 ### 글꼴을 저장소에 같이 넣은 이유
 
